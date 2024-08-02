@@ -1,0 +1,10 @@
+# Copyright (c) 2024 CATIE
+# SPDX-License-Identifier: Apache-2.0
+
+description: Micro Crystal AG RV_8803_C7 RTC.
+
+compatible: "microcrystal,rv-8803-c7"
+
+on-bus: i2c
+
+include: rtc-device.yaml

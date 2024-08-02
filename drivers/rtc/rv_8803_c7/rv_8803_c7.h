@@ -1,0 +1,9 @@
+/*
+ * Copyright (c) 2024, CATIE
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#ifndef ZEPHYR_DRIVERS_SENSOR_RV_8803_C7_RV_8803_C7_H_
+#define ZEPHYR_DRIVERS_SENSOR_RV_8803_C7_RV_8803_C7_H_
+
+#endif /* ZEPHYR_DRIVERS_SENSOR_RV_8803_C7_RV_8803_C7_H_ */
