@@ -5,6 +5,8 @@ description: Micro Crystal AG RV_8803_C7 RTC.
 
 compatible: "microcrystal,rv-8803-c7"
 
-on-bus: i2c
+#on-bus: i2c
 
-include: rtc-device.yaml
+include:
+  - name: rtc-device.yaml
+  - name: i2c-device.yaml
