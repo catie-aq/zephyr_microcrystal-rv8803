@@ -10,6 +10,8 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/util.h>
 
+#include <math.h>
+
 
 LOG_MODULE_REGISTER(RV_8803_C7, CONFIG_RTC_LOG_LEVEL);
 
@@ -30,6 +32,9 @@ LOG_MODULE_REGISTER(RV_8803_C7, CONFIG_RTC_LOG_LEVEL);
 #define RV8803C7_DATE_BITS      GENMASK(5, 0)
 #define RV8803C7_MONTH_BITS     GENMASK(4, 0)
 #define RV8803C7_YEAR_BITS      GENMASK(7, 0)
+
+/* TM OFFSET */
+#define RV8803C7_TM_MONTH 1
 
 /* Control MACRO */
 #define RV8803C7_PARTIAL_SECONDS_INCR 59 // Check for partial incrementation when reads get 59 seconds
@@ -70,9 +75,9 @@ static int rv8803c7_set_time(const struct device *dev, const struct rtc_time *ti
 	regs[1] = bin2bcd(timeptr->tm_sec) & RV8803C7_SECONDS_BITS;
 	regs[2] = bin2bcd(timeptr->tm_min) & RV8803C7_MINUTES_BITS;
 	regs[3] = bin2bcd(timeptr->tm_hour) & RV8803C7_HOURS_BITS;
-	regs[4] = bin2bcd(timeptr->tm_wday) & RV8803C7_WEEKDAY_BITS;
+	regs[4] = (1 << timeptr->tm_wday) & RV8803C7_WEEKDAY_BITS;
 	regs[5] = bin2bcd(timeptr->tm_mday) & RV8803C7_DATE_BITS;
-	regs[6] = bin2bcd(timeptr->tm_mon) & RV8803C7_MONTH_BITS;
+	regs[6] = bin2bcd(timeptr->tm_mon + RV8803C7_TM_MONTH) & RV8803C7_MONTH_BITS;
 	regs[7] = bin2bcd(timeptr->tm_year - RV8803C7_CORRECT_YEAR_LEAP_MIN) & RV8803C7_YEAR_BITS;
 
 	return i2c_write_dt(&config->i2c_bus, regs, 8);
@@ -84,29 +89,39 @@ static int rv8803c7_get_time(const struct device *dev, struct rtc_time *timeptr)
 	}
 
 	const struct rv8803c7_config *config = dev->config;
-	uint8_t regs[7];
+	uint8_t regs1[7];
+	uint8_t regs2[7];
+	uint8_t *correct = regs1;
 	int err;
 
-	err = i2c_burst_read_dt(&config->i2c_bus, RV8803C7_REGISTER_SECONDS, regs, sizeof(regs));
+	err = i2c_burst_read_dt(&config->i2c_bus, RV8803C7_REGISTER_SECONDS, regs1, sizeof(regs1));
 	if (err < 0) {
 		return err;
 	}
 
 	// Check to confirm correct time
-	if ((regs[0] & RV8803C7_SECONDS_BITS) == bin2bcd(59)) {
-		err = i2c_burst_read_dt(&config->i2c_bus, RV8803C7_REGISTER_SECONDS, regs, sizeof(regs));
+	if ((regs1[0] & RV8803C7_SECONDS_BITS) == bin2bcd(59)) {
+		err = i2c_burst_read_dt(&config->i2c_bus, RV8803C7_REGISTER_SECONDS, regs2, sizeof(regs2));
 		if (err < 0) {
 			return err;
 		}
+		if ((correct[0] & RV8803C7_SECONDS_BITS) != bin2bcd(59)) {
+			correct = regs2;
+		}
 	}
 
-	timeptr->tm_sec		= bcd2bin(regs[0] & RV8803C7_SECONDS_BITS);
-	timeptr->tm_min		= bcd2bin(regs[1] & RV8803C7_MINUTES_BITS);
-	timeptr->tm_hour	= bcd2bin(regs[2] & RV8803C7_HOURS_BITS);
-	timeptr->tm_wday	= bcd2bin(regs[3] & RV8803C7_WEEKDAY_BITS);
-	timeptr->tm_mday	= bcd2bin(regs[4] & RV8803C7_DATE_BITS);
-	timeptr->tm_mon		= bcd2bin(regs[5] & RV8803C7_MONTH_BITS);
-	timeptr->tm_year	= bcd2bin(regs[6] & RV8803C7_YEAR_BITS) + RV8803C7_CORRECT_YEAR_LEAP_MIN;
+	timeptr->tm_sec		= bcd2bin(correct[0] & RV8803C7_SECONDS_BITS);
+	timeptr->tm_min		= bcd2bin(correct[1] & RV8803C7_MINUTES_BITS);
+	timeptr->tm_hour	= bcd2bin(correct[2] & RV8803C7_HOURS_BITS);
+	timeptr->tm_wday	= log2(correct[3] & RV8803C7_WEEKDAY_BITS);
+	timeptr->tm_mday	= bcd2bin(correct[4] & RV8803C7_DATE_BITS);
+	timeptr->tm_mon		= bcd2bin(correct[5] & RV8803C7_MONTH_BITS) - RV8803C7_TM_MONTH;
+	timeptr->tm_year	= bcd2bin(correct[6] & RV8803C7_YEAR_BITS) + RV8803C7_CORRECT_YEAR_LEAP_MIN;
+
+	// Unused
+	timeptr->tm_nsec	= 0;
+	timeptr->tm_isdst	= -1;
+	timeptr->tm_yday	= -1;
 
 	LOG_DBG("Get time: year[%u] month[%u] mday[%u] wday[%u] hours[%u] minutes[%u] seconds[%u]",
 			timeptr->tm_year,
