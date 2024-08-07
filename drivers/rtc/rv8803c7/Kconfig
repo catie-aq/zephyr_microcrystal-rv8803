@@ -3,10 +3,10 @@
 # Copyright (c) 2024 CATIE
 # SPDX-License-Identifier: Apache-2.0
 
-config RTC_RV_8803_C7
-    bool "RTC RV_8803_C7 peripheral"
+menuconfig RTC_RV8803C7
+    bool "RTC RV-8803-C7 peripheral"
     default y
     depends on DT_HAS_MICROCRYSTAL_RV_8803_C7_ENABLED
     select I2C
     help
-      Enable driver for MICRO CRYSTAL RV_8803_C7 smt real-time clock module on i2c-bus
+      Enable driver for MICRO CRYSTAL RV-8803-C7 smt real-time clock module on i2c-bus

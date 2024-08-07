@@ -3,6 +3,6 @@
 
 if RTC
 
-rsource "rv_8803_c7/Kconfig"
+rsource "rv8803c7/Kconfig"
 
 endif # RTC
