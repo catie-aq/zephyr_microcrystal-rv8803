@@ -1,3 +1,5 @@
+# RV-8803-C7 RTC example application
+#
 # Copyright (c) 2024 CATIE
 # SPDX-License-Identifier: Apache-2.0
 
