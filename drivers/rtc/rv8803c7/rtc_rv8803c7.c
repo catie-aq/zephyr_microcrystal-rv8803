@@ -151,23 +151,6 @@ static const struct rtc_driver_api rv8803c7_driver_api = {
 	.get_time = rv8803c7_get_time,
 };
 
-/*#define RV8803C7_INIT(inst)																		\
-	static struct rv8803c7_data rv8803c7_data_##inst;											\
-	static const struct rv8803c7_config rv8803c7_config_##inst = {									\
-		.i2c_bus = I2C_DT_SPEC_INST_GET(inst),														\
-	};																								\
-                                                                                                	\
-	DEVICE_DT_INST_DEFINE(inst,																		\
-			&rv8803c7_init,																		\
-			NULL,																					\
-			&rv8803c7_data_##inst,																\
-			&rv8803c7_config_##inst,																\
-			POST_KERNEL,																			\
-			CONFIG_RTC_INIT_PRIORITY,																\
-			&rv8803c7_driver_api);
-
-DT_INST_FOREACH_STATUS_OKAY(RV8803C7_INIT)*/
-
 #define RV8803C7_INIT(n)                                                                             \
 	static const struct rv8803c7_config rv8803c7_config_##n = {                                          \
 		.i2c_bus = I2C_DT_SPEC_INST_GET(n),                                                    \
