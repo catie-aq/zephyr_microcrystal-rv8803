@@ -37,7 +37,7 @@ int main(void)
 		printk("Failed to get time using rtc_time_get()\r\n");
 	}
 
-	printk("RTC_TIME [%02d/%02d/%d %d:%d:%d]\r\n",
+	printk("RTC_TIME [%02d/%02d/%d %02d:%02d:%02d]\r\n",
 			datetime_get.tm_mday,
 			datetime_get.tm_mon + TM_OFFSET_MONTH,
 			datetime_get.tm_year + TM_BASE_YEAR,
@@ -79,7 +79,7 @@ int main(void)
 		if (rtc_get_time(rtc, &datetime_get) != 0) {
 			printk("Failed to get time using rtc_time_get()\r\n");
 		}
-		printk("RTC_TIME [%02d/%02d/%d %d:%d:%d]\r\n",
+		printk("RTC_TIME [%02d/%02d/%d %02d:%02d:%02d]\r\n",
 			datetime_get.tm_mday,
 			datetime_get.tm_mon + TM_OFFSET_MONTH,
 			datetime_get.tm_year + TM_BASE_YEAR,
