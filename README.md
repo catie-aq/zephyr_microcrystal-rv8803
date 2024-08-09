@@ -1,4 +1,4 @@
-# Micro Crystal AG Driver
+# Micro Crystal AG RV-8803 Driver
 
 Zephyr OS driver implementation of Micro Crystal AG [RV-8803-C7](https://www.microcrystal.com/fileadmin/Media/Products/RTC/Datasheet/RV-8803-C7.pdf) SMT real-time clock module with i2c-bus.
 
