@@ -43,7 +43,7 @@ int main(void)
 		}
 
 		strftime(str, TIME_SIZE, "%c", rtc_time_to_tm(&datetime_get));
-		printk("RTC_TIME [%s]\r\n", str);
+		printf("RTC_TIME [%s]\r\n", str);
 
 		k_sleep(K_MSEC(1000));
 	}
