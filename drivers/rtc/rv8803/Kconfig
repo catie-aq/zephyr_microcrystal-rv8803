@@ -6,7 +6,7 @@
 menuconfig RTC_RV8803
     bool "RTC RV-8803 peripheral"
     default y
-    depends on DT_HAS_MICROCRYSTAL_RV_8803_ENABLED
+    depends on DT_HAS_MICROCRYSTAL_RV8803_ENABLED
     select I2C
     help
       Enable driver for MICRO CRYSTAL RV-8803 smt real-time clock module on i2c-bus

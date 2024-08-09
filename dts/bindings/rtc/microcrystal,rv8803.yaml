@@ -3,7 +3,7 @@
 
 description: Micro Crystal AG RV-8803 RTC.
 
-compatible: "microcrystal,rv-8803"
+compatible: "microcrystal,rv8803"
 
 #on-bus: i2c
 

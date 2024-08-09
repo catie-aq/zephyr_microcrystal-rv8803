@@ -13,7 +13,7 @@
 #define RTC_TEST_GET_SET_TIME	  (1767225595UL) // Wed Dec 31 2025 23:59:55 GMT+0000
 #define TIME_SIZE 64
 
-static const struct device *rtc = DEVICE_DT_GET(DT_NODELABEL(rv_8803_c70));
+static const struct device *rtc = DEVICE_DT_GET(DT_NODELABEL(rv88030));
 
 int main(void)
 {
