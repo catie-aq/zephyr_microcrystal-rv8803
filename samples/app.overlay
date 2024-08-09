@@ -7,8 +7,8 @@
 &sixtron_i2c {
 	status = "okay";
 
-	rv_8803_c70: rv-8803-c7@32 {
-		compatible = "microcrystal,rv-8803-c7";
+	rv_8803_c70: rv-8803@32 {
+		compatible = "microcrystal,rv-8803";
 		reg = <0x32>;
 	};
 };
