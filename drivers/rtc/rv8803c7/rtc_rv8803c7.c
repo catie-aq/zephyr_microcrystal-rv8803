@@ -105,7 +105,7 @@ static int rv8803c7_get_time(const struct device *dev, struct rtc_time *timeptr)
 		if (err < 0) {
 			return err;
 		}
-		if ((correct[0] & RV8803C7_SECONDS_BITS) != bin2bcd(59)) {
+		if ((regs2[0] & RV8803C7_SECONDS_BITS) != bin2bcd(59)) {
 			correct = regs2;
 		}
 	}
