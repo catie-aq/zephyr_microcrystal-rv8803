@@ -23,6 +23,7 @@ LOG_MODULE_REGISTER(RV_8803_C7, CONFIG_RTC_LOG_LEVEL);
 #define RV8803C7_REGISTER_DATE      0x04
 #define RV8803C7_REGISTER_MONTH     0x05
 #define RV8803C7_REGISTER_YEAR      0x06
+#define RV8803C7_REGISTER_CONTROL	0x0F
 
 /* Data masks */
 #define RV8803C7_SECONDS_BITS   GENMASK(6, 0)
@@ -37,9 +38,10 @@ LOG_MODULE_REGISTER(RV_8803_C7, CONFIG_RTC_LOG_LEVEL);
 #define RV8803C7_TM_MONTH 1
 
 /* Control MACRO */
-#define RV8803C7_PARTIAL_SECONDS_INCR 59 // Check for partial incrementation when reads get 59 seconds
-#define RV8803C7_CORRECT_YEAR_LEAP_MIN (2000 - 1900) // Diff between 2000 and tm base year 1900
-#define RV8803C7_CORRECT_YEAR_LEAP_MAX (2099 - 1900) // Diff between 2099 and tm base year 1900
+#define RV8803C7_PARTIAL_SECONDS_INCR	59 // Check for partial incrementation when reads get 59 seconds
+#define RV8803C7_CORRECT_YEAR_LEAP_MIN	(2000 - 1900) // Diff between 2000 and tm base year 1900
+#define RV8803C7_CORRECT_YEAR_LEAP_MAX	(2099 - 1900) // Diff between 2099 and tm base year 1900
+#define RV8803C7_RESET_BIT				0x01
 
 /* Structs */
 struct rv8803c7_config {
@@ -69,18 +71,35 @@ static int rv8803c7_set_time(const struct device *dev, const struct rtc_time *ti
 	
 	// Init variables for i2c communication
 	const struct rv8803c7_config *config = dev->config;
-	uint8_t regs[8];
+	uint8_t regs[7];
+	uint8_t control_reg[1];
+	int err;
 
-	regs[0] = RV8803C7_REGISTER_SECONDS;
-	regs[1] = bin2bcd(timeptr->tm_sec) & RV8803C7_SECONDS_BITS;
-	regs[2] = bin2bcd(timeptr->tm_min) & RV8803C7_MINUTES_BITS;
-	regs[3] = bin2bcd(timeptr->tm_hour) & RV8803C7_HOURS_BITS;
-	regs[4] = (1 << timeptr->tm_wday) & RV8803C7_WEEKDAY_BITS;
-	regs[5] = bin2bcd(timeptr->tm_mday) & RV8803C7_DATE_BITS;
-	regs[6] = bin2bcd(timeptr->tm_mon + RV8803C7_TM_MONTH) & RV8803C7_MONTH_BITS;
-	regs[7] = bin2bcd(timeptr->tm_year - RV8803C7_CORRECT_YEAR_LEAP_MIN) & RV8803C7_YEAR_BITS;
+	regs[0] = bin2bcd(timeptr->tm_sec) & RV8803C7_SECONDS_BITS;
+	regs[1] = bin2bcd(timeptr->tm_min) & RV8803C7_MINUTES_BITS;
+	regs[2] = bin2bcd(timeptr->tm_hour) & RV8803C7_HOURS_BITS;
+	regs[3] = (1 << timeptr->tm_wday) & RV8803C7_WEEKDAY_BITS;
+	regs[4] = bin2bcd(timeptr->tm_mday) & RV8803C7_DATE_BITS;
+	regs[5] = bin2bcd(timeptr->tm_mon + RV8803C7_TM_MONTH) & RV8803C7_MONTH_BITS;
+	regs[6] = bin2bcd(timeptr->tm_year - RV8803C7_CORRECT_YEAR_LEAP_MIN) & RV8803C7_YEAR_BITS;
 
-	return i2c_write_dt(&config->i2c_bus, regs, 8);
+	// Stopping time update clock
+    err = i2c_burst_read_dt(&config->i2c_bus, RV8803C7_REGISTER_CONTROL, control_reg, sizeof(control_reg));
+	if (err < 0) {
+		return err;
+	}
+	control_reg[0] |= RV8803C7_RESET_BIT;
+	err = i2c_burst_write_dt(&config->i2c_bus, RV8803C7_REGISTER_CONTROL, control_reg, sizeof(control_reg));
+	if (err < 0) {
+		return err;
+	}
+
+	// Write new time to RTC register
+	i2c_burst_write_dt(&config->i2c_bus, RV8803C7_REGISTER_SECONDS, regs, sizeof(regs));
+
+	// Restart time update clock
+	control_reg[0] &= ~RV8803C7_RESET_BIT;
+    return i2c_burst_write_dt(&config->i2c_bus, RV8803C7_REGISTER_CONTROL, control_reg, sizeof(control_reg));
 }
 
 static int rv8803c7_get_time(const struct device *dev, struct rtc_time *timeptr) {
