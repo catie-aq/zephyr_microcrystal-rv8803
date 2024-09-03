@@ -1,8 +1,4 @@
 # Copyright (c) 2024 CATIE
 # SPDX-License-Identifier: Apache-2.0
 
-if RTC
-
-rsource "microcrystal/Kconfig"
-
-endif # RTC
+add_subdirectory_ifdef(CONFIG_RV8803 rv8803)
