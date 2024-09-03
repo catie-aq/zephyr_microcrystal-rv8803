@@ -10,3 +10,8 @@ compatible: "microcrystal,rv8803"
 include:
   - name: rtc-device.yaml
   - name: i2c-device.yaml
+
+properties:
+  irq-gpios:
+    type: phandle-array
+    description: Configures RV-8803 RTC interrupt signal.
