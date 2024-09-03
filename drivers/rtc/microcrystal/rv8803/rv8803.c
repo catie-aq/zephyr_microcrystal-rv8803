@@ -7,6 +7,7 @@
 
 #include <zephyr/drivers/rtc.h>
 #include <zephyr/drivers/i2c.h>
+#include <zephyr/drivers/gpio.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/util.h>
 
@@ -43,9 +44,16 @@ LOG_MODULE_REGISTER(RV8803, CONFIG_RTC_LOG_LEVEL);
 #define RV8803_CORRECT_YEAR_LEAP_MAX	(2099 - 1900) // Diff between 2099 and tm base year 1900
 #define RV8803_RESET_BIT				0x01
 
+#if DT_ANY_INST_HAS_PROP_STATUS_OKAY(irq_gpios) && defined(CONFIG_RTC_ALARM)
+#define RV8803_IRQ_GPIO_IN_USE 1
+#endif
+
 /* Structs */
 struct rv8803_config {
 	struct i2c_dt_spec i2c_bus;
+#if RV8803_IRQ_GPIO_IN_USE
+	const struct gpio_dt_spec irq_gpio;
+#endif
 };
 
 struct rv8803_data {
@@ -162,6 +170,9 @@ static int rv8803_init(const struct device *dev)
 		LOG_ERR("I2C bus not ready!!");
 		return -ENODEV;
 	}
+#if RV8803_IRQ_GPIO_IN_USE
+	LOG_INF("IRQ handle: [%s][%d][%d]!", config->irq_gpio.port->name, config->irq_gpio.pin, config->irq_gpio.dt_flags);
+#endif
 
 	return 0;
 }
@@ -171,9 +182,11 @@ static const struct rtc_driver_api rv8803_driver_api = {
 	.get_time = rv8803_get_time,
 };
 
-#define RV8803_INIT(n)                                                                             \
-	static const struct rv8803_config rv8803_config_##n = {                                          \
+#define RV8803_INIT(n)                                                                         \
+	static const struct rv8803_config rv8803_config_##n = {                                    \
 		.i2c_bus = I2C_DT_SPEC_INST_GET(n),                                                    \
+		IF_ENABLED(RV8803_IRQ_GPIO_IN_USE,                                                     \
+		(.irq_gpio = GPIO_DT_SPEC_INST_GET_OR(n, irq_gpios, {0}))),                            \
 	};                                                                                         \
 	static struct rv8803_data rv8803_data_##n;                                                 \
 	DEVICE_DT_INST_DEFINE(n, rv8803_init, NULL, &rv8803_data_##n, &rv8803_config_##n,          \
