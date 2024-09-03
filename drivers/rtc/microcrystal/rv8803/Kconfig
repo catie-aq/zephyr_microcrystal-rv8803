@@ -3,7 +3,7 @@
 # Copyright (c) 2024 CATIE
 # SPDX-License-Identifier: Apache-2.0
 
-menuconfig RTC_RV8803
+menuconfig RV8803
     bool "RTC RV-8803 peripheral"
     default y
     depends on DT_HAS_MICROCRYSTAL_RV8803_ENABLED
