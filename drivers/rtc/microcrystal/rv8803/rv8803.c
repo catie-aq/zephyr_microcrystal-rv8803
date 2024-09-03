@@ -44,7 +44,16 @@ LOG_MODULE_REGISTER(RV8803, CONFIG_RTC_LOG_LEVEL);
 #define RV8803_CORRECT_YEAR_LEAP_MAX	(2099 - 1900) // Diff between 2099 and tm base year 1900
 #define RV8803_RESET_BIT				0x01
 
-#if DT_ANY_INST_HAS_PROP_STATUS_OKAY(irq_gpios) && defined(CONFIG_RTC_ALARM)
+#if DT_ANY_INST_HAS_PROP_STATUS_OKAY(irq_gpios)
+#if defined(CONFIG_RTC_ALARM)
+#define RV8803_IRQ_GPIO_USE_ALARM 1
+#endif
+#if defined(CONFIG_RTC_UPDATE)
+#define RV8803_IRQ_GPIO_USE_UPDATE 1
+#endif
+#endif
+
+#if defined(RV8803_IRQ_GPIO_USE_ALARM) || defined(RV8803_IRQ_GPIO_USE_UPDATE)
 #define RV8803_IRQ_GPIO_IN_USE 1
 #endif
 
@@ -162,6 +171,33 @@ static int rv8803_get_time(const struct device *dev, struct rtc_time *timeptr) {
 	return 0;
 }
 
+#if RV8803_IRQ_GPIO_USE_ALARM
+static int rv8803_alarm_get_supported_fields(const struct device *dev, uint16_t id, uint16_t *mask)
+{
+	return 0;
+}
+static int rv8803_alarm_set_time(const struct device *dev, uint16_t id, uint16_t mask, const struct rtc_time *timeptr)
+{
+	return 0;
+}
+
+static int rv8803_alarm_get_time(const struct device *dev, uint16_t id, uint16_t *mask, struct rtc_time *timeptr)
+{
+	return 0;
+}
+
+static int rv8803_alarm_is_pending(const struct device *dev, uint16_t id)
+{
+	return 0;
+}
+
+static int rv8803_alarm_set_callback(const struct device *dev, uint16_t id, rtc_alarm_callback callback, void *user_data)
+{
+	return 0;
+}
+
+#endif // CONFIG_RTC_ALARM
+
 static int rv8803_init(const struct device *dev)
 {
 	const struct rv8803_config *config = dev->config;
@@ -180,6 +216,13 @@ static int rv8803_init(const struct device *dev)
 static const struct rtc_driver_api rv8803_driver_api = {
 	.set_time = rv8803_set_time,
 	.get_time = rv8803_get_time,
+#if CONFIG_RTC_ALARM
+	.alarm_get_supported_fields = rv8803_alarm_get_supported_fields,
+	.alarm_set_time				= rv8803_alarm_set_time,
+	.alarm_get_time				= rv8803_alarm_get_time,
+	.alarm_is_pending			= rv8803_alarm_is_pending,
+	.alarm_set_callback			= rv8803_alarm_set_callback,
+#endif
 };
 
 #define RV8803_INIT(n)                                                                         \
