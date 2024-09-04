@@ -349,7 +349,7 @@ static int rv8803_alarm_set_time(const struct device *dev, uint16_t id, uint16_t
 	if (mask & RTC_ALARM_TIME_MASK_WEEKDAY) {
 		regs[2] = RV8803_ALARM_ENABLE_WADA;
 		regs[2] |= (1 << timeptr->tm_wday) & RV8803_WEEKDAY_BITS;
-	} else if (mask && RTC_ALARM_TIME_MASK_MONTHDAY) {
+	} else if (mask & RTC_ALARM_TIME_MASK_MONTHDAY) {
 		regs[2] = RV8803_ALARM_ENABLE_WADA;
 		regs[2] |= bin2bcd(timeptr->tm_mday) & RV8803_DATE_BITS;
 	} else {
@@ -425,7 +425,7 @@ static int rv8803_alarm_is_pending(const struct device *dev, uint16_t id)
 		err = i2c_reg_update_byte_dt(&config->i2c_bus,
 								RV8803_REGISTER_FLAG,
 								RV8803_FLAG_MASK_ALARM,
-								RV8803_FLAG_MASK_ALARM);
+								RV8803_DISABLE_ALARM);
 		if (err < 0) return err;
 
 		return 1;
@@ -470,7 +470,7 @@ static void rv8803_alarm_worker(struct k_work *p_work)
 			err = i2c_reg_update_byte_dt(&config->i2c_bus,
 								RV8803_REGISTER_FLAG,
 								RV8803_FLAG_MASK_ALARM,
-								RV8803_FLAG_MASK_ALARM);
+								RV8803_DISABLE_ALARM);
 			if (err < 0) LOG_ERR("Alarm worker I2C update FLAG error");
 		}
 	}
@@ -523,6 +523,8 @@ static int rv8803_init(const struct device *dev)
 #endif
 
 #if RV8803_IRQ_GPIO_USE_ALARM
+	data->alarm_cb = NULL;
+	data->alarm_cb_data = NULL;
 	data->alarm_work.handler = rv8803_alarm_worker;
 #endif
 
