@@ -382,6 +382,24 @@ static int rv8803_alarm_get_time(const struct device *dev, uint16_t id, uint16_t
 
 static int rv8803_alarm_is_pending(const struct device *dev, uint16_t id)
 {
+	ARG_UNUSED(id);
+	const struct rv8803_config *config = dev->config;
+	uint8_t reg;
+	int err;
+
+	err = i2c_reg_read_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG, &reg);
+	if (err < 0) return err;
+
+	if (reg & RV8803_FLAG_MASK_ALARM) {
+		err = i2c_reg_update_byte_dt(&config->i2c_bus,
+								RV8803_REGISTER_FLAG,
+								RV8803_FLAG_MASK_ALARM,
+								RV8803_FLAG_MASK_ALARM);
+		if (err < 0) return err;
+
+		return 1;
+	}
+
 	return 0;
 }
 
