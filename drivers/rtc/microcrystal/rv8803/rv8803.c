@@ -220,11 +220,7 @@ static void rv8803_gpio_callback_handler(const struct device *p_port, struct gpi
 	struct rv8803_data *data = CONTAINER_OF(p_cb, struct rv8803_data, gpio_cb);
 
 #if CONFIG_RTC_ALARM
-	k_work_submit(&data->alarm_work);
-#endif
-
-#if CONFIG_RTC_UPDATE
-	k_work_submit(&data->update_work);
+	k_work_submit(&data->alarm_work); // Using work queue to exit isr context
 #endif
 }
 #endif
