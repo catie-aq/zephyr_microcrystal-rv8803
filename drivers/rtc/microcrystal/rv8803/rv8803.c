@@ -16,7 +16,7 @@
 
 LOG_MODULE_REGISTER(RV8803, CONFIG_RTC_LOG_LEVEL);
 
-/* Registers */
+/* Calendar Registers */
 #define RV8803_REGISTER_SECONDS	0x00
 #define RV8803_REGISTER_MINUTES	0x01
 #define RV8803_REGISTER_HOURS	0x02
@@ -24,7 +24,16 @@ LOG_MODULE_REGISTER(RV8803, CONFIG_RTC_LOG_LEVEL);
 #define RV8803_REGISTER_DATE	0x04
 #define RV8803_REGISTER_MONTH	0x05
 #define RV8803_REGISTER_YEAR	0x06
-#define RV8803_REGISTER_CONTROL	0x0F
+
+/* Alarm Registers */
+#define RV8803_REGISTER_ALARM_MINUTES	0x08
+#define RV8803_REGISTER_ALARM_HOURS		0x09
+#define RV8803_REGISTER_ALARM_WADA		0x0A
+
+/* Control Registers */
+#define RV8803_REGISTER_EXTENSION	0x0D
+#define RV8803_REGISTER_FLAG		0x0E
+#define RV8803_REGISTER_CONTROL		0x0F
 
 /* Data masks */
 #define RV8803_SECONDS_BITS	GENMASK(6, 0)
@@ -35,6 +44,17 @@ LOG_MODULE_REGISTER(RV8803, CONFIG_RTC_LOG_LEVEL);
 #define RV8803_MONTH_BITS	GENMASK(4, 0)
 #define RV8803_YEAR_BITS	GENMASK(7, 0)
 
+/* Registers Mask */
+#define RV8803_EXTENSION_MASK_WADA		(0x01 << 6)
+#define RV8803_FLAG_MASK_ALARM			(0x01 << 3)
+#define RV8803_CONTROL_MASK_ALARM		(0x01 << 3)
+#define RV8803_ALARM_ENABLE_MINUTES		(0x00 << 7)
+#define RV8803_ALARM_ENABLE_HOURS		(0x00 << 7)
+#define RV8803_ALARM_ENABLE_WADA		(0x00 << 7)
+#define RV8803_ALARM_DISABLE_MINUTES	(0x01 << 7)
+#define RV8803_ALARM_DISABLE_HOURS		(0x01 << 7)
+#define RV8803_ALARM_DISABLE_WADA		(0x01 << 7)
+
 /* TM OFFSET */
 #define RV8803_TM_MONTH	1
 
@@ -42,7 +62,11 @@ LOG_MODULE_REGISTER(RV8803, CONFIG_RTC_LOG_LEVEL);
 #define RV8803_PARTIAL_SECONDS_INCR		59 // Check for partial incrementation when reads get 59 seconds
 #define RV8803_CORRECT_YEAR_LEAP_MIN	(2000 - 1900) // Diff between 2000 and tm base year 1900
 #define RV8803_CORRECT_YEAR_LEAP_MAX	(2099 - 1900) // Diff between 2099 and tm base year 1900
-#define RV8803_RESET_BIT				0x01
+#define RV8803_RESET_BIT				(0x01 << 0)
+#define RV8803_ENABLE_ALARM				(0x01 << 3)
+#define RV8803_DISABLE_ALARM			(0x00 << 3)
+#define RV8803_WEEKDAY_ALARM			(0x00 << 6)
+#define RV8803_MONTHDAY_ALARM			(0x01 << 6)
 
 #if DT_ANY_INST_HAS_PROP_STATUS_OKAY(irq_gpios)
 #if defined(CONFIG_RTC_ALARM)
@@ -172,12 +196,142 @@ static int rv8803_get_time(const struct device *dev, struct rtc_time *timeptr) {
 }
 
 #if RV8803_IRQ_GPIO_USE_ALARM
+static bool rv8803_alarm_time_valid(const struct rtc_time *timeptr, uint16_t mask)
+{
+	if (timeptr->tm_sec != 0) {
+		return false;
+	}
+
+	if ((mask & RTC_ALARM_TIME_MASK_MINUTE) && (timeptr->tm_min < 0 || timeptr->tm_min > 59)) {
+		return false;
+	}
+
+	if ((mask & RTC_ALARM_TIME_MASK_HOUR) && (timeptr->tm_hour < 0 || timeptr->tm_hour > 23)) {
+		return false;
+	}
+
+	if (timeptr->tm_mon != 0) {
+		return false;
+	}
+
+	if ((mask & RTC_ALARM_TIME_MASK_MONTHDAY) && (mask & RTC_ALARM_TIME_MASK_WEEKDAY)) {
+		return false;
+	}
+
+	if ((mask & RTC_ALARM_TIME_MASK_MONTHDAY) &&
+	    (timeptr->tm_mday < 1 || timeptr->tm_mday > 31)) {
+		return false;
+	}
+
+	if ((mask & RTC_ALARM_TIME_MASK_WEEKDAY) &&
+	    (timeptr->tm_wday < 0 || timeptr->tm_wday > 6)) {
+		return false;
+	}
+
+	return true;
+}
+
 static int rv8803_alarm_get_supported_fields(const struct device *dev, uint16_t id, uint16_t *mask)
 {
+	ARG_UNUSED(dev);
+	ARG_UNUSED(id);
+
+	(*mask) = 	(RTC_ALARM_TIME_MASK_MINUTE | RTC_ALARM_TIME_MASK_HOUR |
+				RTC_ALARM_TIME_MASK_MONTHDAY | RTC_ALARM_TIME_MASK_WEEKDAY);
+
 	return 0;
 }
 static int rv8803_alarm_set_time(const struct device *dev, uint16_t id, uint16_t mask, const struct rtc_time *timeptr)
 {
+	ARG_UNUSED(id);
+	const struct rv8803_config *config = dev->config;
+	int err;
+
+	if ((timeptr == NULL) && (mask > 0)) {
+		LOG_ERR("Invalid time pointer!!");
+		return -EINVAL;
+	}
+
+	if (!rv8803_alarm_time_valid(timeptr, mask)) {
+		LOG_ERR("Invalid Time / Mask!!");
+		return -EINVAL;
+	}
+
+	// Mask = 0 : Remove alarm interrupt
+	if (mask == 0) {
+		err = i2c_reg_update_byte_dt(&config->i2c_bus,
+									RV8803_REGISTER_CONTROL,
+					    			RV8803_CONTROL_MASK_ALARM,
+					    			RV8803_DISABLE_ALARM);
+		if (err < 0) return err;
+		err = i2c_reg_update_byte_dt(&config->i2c_bus,
+									RV8803_REGISTER_FLAG,
+					    			RV8803_FLAG_MASK_ALARM,
+					    			RV8803_DISABLE_ALARM);
+		if (err < 0) return err;
+
+		return 0;
+	}
+
+	// AIE and AF to 0 -> stop interrupt and clear interrupt flags
+	err = i2c_reg_update_byte_dt(&config->i2c_bus,
+								RV8803_REGISTER_CONTROL,
+								RV8803_CONTROL_MASK_ALARM,
+								RV8803_DISABLE_ALARM);
+	if (err < 0) return err;
+	err = i2c_reg_update_byte_dt(&config->i2c_bus,
+								RV8803_REGISTER_FLAG,
+								RV8803_FLAG_MASK_ALARM,
+								RV8803_DISABLE_ALARM);
+	if (err < 0) return err;
+
+	// Set WADA to 0 or 1
+	uint8_t wada = RV8803_WEEKDAY_ALARM;
+	if (mask && RTC_ALARM_TIME_MASK_MONTHDAY) {
+		wada = RV8803_MONTHDAY_ALARM;
+	}
+	err = i2c_reg_update_byte_dt(&config->i2c_bus,
+								RV8803_REGISTER_EXTENSION,
+								RV8803_EXTENSION_MASK_WADA,
+								wada);
+	if (err < 0) return err;
+
+	// Set desired time and alarm
+	uint8_t regs[3];
+	if (mask && RTC_ALARM_TIME_MASK_MINUTE) {
+		regs[0] = RV8803_ALARM_ENABLE_MINUTES;
+		regs[0] |= bin2bcd(timeptr->tm_min) & RV8803_MINUTES_BITS;
+	} else {
+		regs[0] = RV8803_ALARM_DISABLE_MINUTES;
+	}
+
+	if (mask && RTC_ALARM_TIME_MASK_HOUR) {
+		regs[1] = RV8803_ALARM_ENABLE_HOURS;
+		regs[1] |= bin2bcd(timeptr->tm_hour) & RV8803_HOURS_BITS;
+	} else {
+		regs[1] = RV8803_ALARM_DISABLE_HOURS;
+	}
+
+	if (mask && RTC_ALARM_TIME_MASK_WEEKDAY) {
+		regs[2] = RV8803_ALARM_ENABLE_WADA;
+		regs[2] |= (1 << timeptr->tm_wday) & RV8803_WEEKDAY_BITS;
+	} else if (mask && RTC_ALARM_TIME_MASK_MONTHDAY) {
+		regs[2] = RV8803_ALARM_ENABLE_WADA;
+		regs[2] |= bin2bcd(timeptr->tm_mday) & RV8803_DATE_BITS;
+	} else {
+		regs[2] = RV8803_ALARM_DISABLE_WADA;
+	}
+
+	err = i2c_burst_write_dt(&config->i2c_bus, RV8803_REGISTER_ALARM_MINUTES, regs, sizeof(regs));
+	if (err < 0) return err;
+
+	// AIE 1 -> activate interrupt
+	err = i2c_reg_update_byte_dt(&config->i2c_bus,
+								RV8803_REGISTER_CONTROL,
+								RV8803_CONTROL_MASK_ALARM,
+								RV8803_ENABLE_ALARM);
+	if (err < 0) return err;
+
 	return 0;
 }
 
