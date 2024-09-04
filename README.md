@@ -6,5 +6,5 @@ Based on [RV-8803-C7 Datasheet](https://www.microcrystal.com/fileadmin/Media/Pro
 Implemented feature:
 
 * [X] Basic time setter/getter
-* [ ] Alarm Interface
+* [X] Alarm Interface
 * [ ] Update Interface
