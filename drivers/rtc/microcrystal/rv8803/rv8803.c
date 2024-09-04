@@ -211,6 +211,24 @@ static int rv8803_get_time(const struct device *dev, struct rtc_time *timeptr) {
 	return 0;
 }
 
+#if DT_ANY_INST_HAS_PROP_STATUS_OKAY(irq_gpios)
+static void rv8803_gpio_callback_handler(const struct device *p_port, struct gpio_callback *p_cb, gpio_port_pins_t pins)
+{
+	ARG_UNUSED(p_port);
+	ARG_UNUSED(pins);
+
+	struct rv8803_data *data = CONTAINER_OF(p_cb, struct rv8803_data, gpio_cb);
+
+#if CONFIG_RTC_ALARM
+	k_work_submit(&data->alarm_work);
+#endif
+
+#if CONFIG_RTC_UPDATE
+	k_work_submit(&data->update_work);
+#endif
+}
+#endif
+
 #if RV8803_IRQ_GPIO_USE_ALARM
 static bool rv8803_alarm_time_valid(const struct rtc_time *timeptr, uint16_t mask)
 {
