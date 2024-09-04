@@ -93,9 +93,18 @@ struct rv8803_config {
 };
 
 struct rv8803_data {
+#if DT_ANY_INST_HAS_PROP_STATUS_OKAY(irq_gpios)
+	struct gpio_callback gpio_cb;
+#if RV8803_IRQ_GPIO_IN_USE
+	const struct device *dev;
+#endif
+#endif
+
+
 #if RV8803_IRQ_GPIO_USE_ALARM
 	rtc_alarm_callback alarm_cb;
 	void *alarm_cb_data;
+	struct k_work alarm_work;
 #endif
 };
 
@@ -418,8 +427,34 @@ static int rv8803_alarm_set_callback(const struct device *dev, uint16_t id, rtc_
 	struct rv8803_data *data = dev->data;
 	data->alarm_cb = callback;
 	data->alarm_cb_data = user_data;
-	
+
 	return 0;
+}
+
+static void rv8803_alarm_worker(struct k_work *p_work)
+{
+	struct rv8803_data *data = CONTAINER_OF(p_work, struct rv8803_data, alarm_work);
+	const struct rv8803_config *config = data->dev->config;
+
+	LOG_DBG("Process Alarm worker from interrupt");
+
+	if (data->alarm_cb != NULL) {
+		uint8_t reg;
+
+		err = i2c_reg_read_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG, &reg);
+		if (err < 0) return err;
+
+		if (reg & RV8803_FLAG_MASK_ALARM) {
+			LOG_DBG("Calling Alarm callback");
+			data->alarm_cb(data->dev, 0, data->alarm_cb_data);
+
+			err = i2c_reg_update_byte_dt(&config->i2c_bus,
+								RV8803_REGISTER_FLAG,
+								RV8803_FLAG_MASK_ALARM,
+								RV8803_FLAG_MASK_ALARM);
+			if (err < 0) return err;
+		}
+	}
 }
 #endif // CONFIG_RTC_ALARM
 
