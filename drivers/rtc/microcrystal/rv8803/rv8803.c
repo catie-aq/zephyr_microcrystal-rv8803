@@ -480,6 +480,7 @@ static void rv8803_alarm_worker(struct k_work *p_work)
 static int rv8803_init(const struct device *dev)
 {
 	const struct rv8803_config *config = dev->config;
+	struct rv8803_data *data = dev->data;
 
 	if (!i2c_is_ready_dt(&config->i2c_bus)) {
 		LOG_ERR("I2C bus not ready!!");
@@ -487,6 +488,42 @@ static int rv8803_init(const struct device *dev)
 	}
 #if RV8803_IRQ_GPIO_IN_USE
 	LOG_INF("IRQ handle: [%s][%d][%d]!", config->irq_gpio.port->name, config->irq_gpio.pin, config->irq_gpio.dt_flags);
+#endif
+
+#if RV8803_IRQ_GPIO_IN_USE
+	int err;
+	if (!gpio_is_ready_dt(&config->irq_gpio)) {
+		LOG_ERR("GPIO not ready!!");
+		return -ENODEV;
+	}
+
+	err = gpio_pin_configure_dt(&config->irq_gpio, GPIO_INPUT);
+	if (err < 0) {
+		LOG_ERR("Failed to configure GPIO!!");
+		return err;
+	}
+
+	err = gpio_pin_interrupt_configure_dt(&config->irq_gpio, GPIO_INT_EDGE_FALLING);
+	if (err < 0) {
+		LOG_ERR("Failed to configure interrupt!!");
+		return err;
+	}
+
+	gpio_init_callback(&data->gpio_cb, rv8803_gpio_callback_handler, BIT(config->irq_gpio.pin));
+
+	err = gpio_add_callback_dt(&config->irq_gpio, &data->gpio_cb);
+	if (err < 0) {
+		LOG_ERR("Failed to add GPIO callback!!");
+		return err;
+	}
+#endif
+
+#if DT_ANY_INST_HAS_PROP_STATUS_OKAY(irq_gpios)
+	data->dev = dev;
+#endif
+
+#if RV8803_IRQ_GPIO_USE_ALARM
+	data->alarm_work.handler = rv8803_alarm_worker;
 #endif
 
 	return 0;
