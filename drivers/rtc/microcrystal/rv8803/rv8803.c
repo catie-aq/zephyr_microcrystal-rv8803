@@ -54,6 +54,9 @@ LOG_MODULE_REGISTER(RV8803, CONFIG_RTC_LOG_LEVEL);
 #define RV8803_ALARM_DISABLE_MINUTES	(0x01 << 7)
 #define RV8803_ALARM_DISABLE_HOURS		(0x01 << 7)
 #define RV8803_ALARM_DISABLE_WADA		(0x01 << 7)
+#define RV8803_ALARM_MASK_MINUTES		RV8803_ALARM_DISABLE_MINUTES
+#define RV8803_ALARM_MASK_HOURS			RV8803_ALARM_DISABLE_HOURS
+#define RV8803_ALARM_MASK_WADA			RV8803_ALARM_DISABLE_WADA
 
 /* TM OFFSET */
 #define RV8803_TM_MONTH	1
@@ -337,6 +340,43 @@ static int rv8803_alarm_set_time(const struct device *dev, uint16_t id, uint16_t
 
 static int rv8803_alarm_get_time(const struct device *dev, uint16_t id, uint16_t *mask, struct rtc_time *timeptr)
 {
+	ARG_UNUSED(id);
+	const struct rv8803_config *config = dev->config;
+	int err;
+
+	if (timeptr == NULL) {
+		return -EINVAL;
+	}
+	(*mask) = 0;
+
+	uint8_t regs[3];
+	err = i2c_burst_read_dt(&config->i2c_bus, RV8803_REGISTER_ALARM_MINUTES, regs, sizeof(regs));
+	if (err < 0) return err;
+
+	if ((regs[0] && RV8803_ALARM_MASK_MINUTES) == RV8803_ALARM_ENABLE_MINUTES) {
+		(*mask) |= RTC_ALARM_TIME_MASK_MINUTE;
+		timeptr->tm_min = bcd2bin(regs[0] & RV8803_MINUTES_BITS);
+	}
+
+	if ((regs[1] && RV8803_ALARM_MASK_HOURS) == RV8803_ALARM_ENABLE_HOURS) {
+		(*mask) |= RTC_ALARM_TIME_MASK_HOUR;
+		timeptr->tm_hour = bcd2bin(regs[1] & RV8803_HOURS_BITS);
+	}
+
+	if ((regs[2] && RV8803_ALARM_MASK_WADA) == RV8803_ALARM_ENABLE_WADA) {
+		uint8_t wada;
+		err = i2c_reg_read_byte_dt(&config->i2c_bus, RV8803_REGISTER_EXTENSION, &wada);
+		if (err < 0) return err;
+
+		if ((wada && RV8803_EXTENSION_MASK_WADA) == RV8803_WEEKDAY_ALARM) {
+			(*mask) |= RTC_ALARM_TIME_MASK_WEEKDAY;
+			timeptr->tm_wday = log2(regs[2] & RV8803_WEEKDAY_BITS);
+		} else {
+			(*mask) |= RTC_ALARM_TIME_MASK_MONTHDAY;
+			timeptr->tm_mday = bcd2bin(regs[2] & RV8803_DATE_BITS);
+		}
+	}
+
 	return 0;
 }
 
