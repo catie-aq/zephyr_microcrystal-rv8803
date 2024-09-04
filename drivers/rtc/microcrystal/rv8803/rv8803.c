@@ -93,6 +93,10 @@ struct rv8803_config {
 };
 
 struct rv8803_data {
+#if RV8803_IRQ_GPIO_USE_ALARM
+	rtc_alarm_callback alarm_cb;
+	void *alarm_cb_data;
+#endif
 };
 
 
@@ -405,9 +409,18 @@ static int rv8803_alarm_is_pending(const struct device *dev, uint16_t id)
 
 static int rv8803_alarm_set_callback(const struct device *dev, uint16_t id, rtc_alarm_callback callback, void *user_data)
 {
+	ARG_UNUSED(id);
+	const struct rv8803_config *config = dev->config;
+	if (config->int_gpio.port == NULL) {
+		return -ENOTSUP;
+	}
+
+	struct rv8803_data *data = dev->data;
+	data->alarm_cb = callback;
+	data->alarm_cb_data = user_data;
+	
 	return 0;
 }
-
 #endif // CONFIG_RTC_ALARM
 
 static int rv8803_init(const struct device *dev)
