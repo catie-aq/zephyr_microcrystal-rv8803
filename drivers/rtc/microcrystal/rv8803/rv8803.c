@@ -301,21 +301,21 @@ static int rv8803_alarm_set_time(const struct device *dev, uint16_t id, uint16_t
 
 	// Set desired time and alarm
 	uint8_t regs[3];
-	if (mask && RTC_ALARM_TIME_MASK_MINUTE) {
+	if (mask & RTC_ALARM_TIME_MASK_MINUTE) {
 		regs[0] = RV8803_ALARM_ENABLE_MINUTES;
 		regs[0] |= bin2bcd(timeptr->tm_min) & RV8803_MINUTES_BITS;
 	} else {
 		regs[0] = RV8803_ALARM_DISABLE_MINUTES;
 	}
 
-	if (mask && RTC_ALARM_TIME_MASK_HOUR) {
+	if (mask & RTC_ALARM_TIME_MASK_HOUR) {
 		regs[1] = RV8803_ALARM_ENABLE_HOURS;
 		regs[1] |= bin2bcd(timeptr->tm_hour) & RV8803_HOURS_BITS;
 	} else {
 		regs[1] = RV8803_ALARM_DISABLE_HOURS;
 	}
 
-	if (mask && RTC_ALARM_TIME_MASK_WEEKDAY) {
+	if (mask & RTC_ALARM_TIME_MASK_WEEKDAY) {
 		regs[2] = RV8803_ALARM_ENABLE_WADA;
 		regs[2] |= (1 << timeptr->tm_wday) & RV8803_WEEKDAY_BITS;
 	} else if (mask && RTC_ALARM_TIME_MASK_MONTHDAY) {
@@ -353,22 +353,22 @@ static int rv8803_alarm_get_time(const struct device *dev, uint16_t id, uint16_t
 	err = i2c_burst_read_dt(&config->i2c_bus, RV8803_REGISTER_ALARM_MINUTES, regs, sizeof(regs));
 	if (err < 0) return err;
 
-	if ((regs[0] && RV8803_ALARM_MASK_MINUTES) == RV8803_ALARM_ENABLE_MINUTES) {
+	if ((regs[0] & RV8803_ALARM_MASK_MINUTES) == RV8803_ALARM_ENABLE_MINUTES) {
 		(*mask) |= RTC_ALARM_TIME_MASK_MINUTE;
 		timeptr->tm_min = bcd2bin(regs[0] & RV8803_MINUTES_BITS);
 	}
 
-	if ((regs[1] && RV8803_ALARM_MASK_HOURS) == RV8803_ALARM_ENABLE_HOURS) {
+	if ((regs[1] & RV8803_ALARM_MASK_HOURS) == RV8803_ALARM_ENABLE_HOURS) {
 		(*mask) |= RTC_ALARM_TIME_MASK_HOUR;
 		timeptr->tm_hour = bcd2bin(regs[1] & RV8803_HOURS_BITS);
 	}
 
-	if ((regs[2] && RV8803_ALARM_MASK_WADA) == RV8803_ALARM_ENABLE_WADA) {
+	if ((regs[2] & RV8803_ALARM_MASK_WADA) == RV8803_ALARM_ENABLE_WADA) {
 		uint8_t wada;
 		err = i2c_reg_read_byte_dt(&config->i2c_bus, RV8803_REGISTER_EXTENSION, &wada);
 		if (err < 0) return err;
 
-		if ((wada && RV8803_EXTENSION_MASK_WADA) == RV8803_WEEKDAY_ALARM) {
+		if ((wada & RV8803_EXTENSION_MASK_WADA) == RV8803_WEEKDAY_ALARM) {
 			(*mask) |= RTC_ALARM_TIME_MASK_WEEKDAY;
 			timeptr->tm_wday = log2(regs[2] & RV8803_WEEKDAY_BITS);
 		} else {
