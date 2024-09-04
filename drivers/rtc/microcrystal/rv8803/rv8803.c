@@ -438,7 +438,7 @@ static int rv8803_alarm_set_callback(const struct device *dev, uint16_t id, rtc_
 {
 	ARG_UNUSED(id);
 	const struct rv8803_config *config = dev->config;
-	if (config->int_gpio.port == NULL) {
+	if (config->irq_gpio.port == NULL) {
 		return -ENOTSUP;
 	}
 
@@ -453,6 +453,7 @@ static void rv8803_alarm_worker(struct k_work *p_work)
 {
 	struct rv8803_data *data = CONTAINER_OF(p_work, struct rv8803_data, alarm_work);
 	const struct rv8803_config *config = data->dev->config;
+	int err;
 
 	LOG_DBG("Process Alarm worker from interrupt");
 
@@ -460,7 +461,7 @@ static void rv8803_alarm_worker(struct k_work *p_work)
 		uint8_t reg;
 
 		err = i2c_reg_read_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG, &reg);
-		if (err < 0) return err;
+		if (err < 0) LOG_ERR("Alarm worker I2C read FLAGS error");
 
 		if (reg & RV8803_FLAG_MASK_ALARM) {
 			LOG_DBG("Calling Alarm callback");
@@ -470,7 +471,7 @@ static void rv8803_alarm_worker(struct k_work *p_work)
 								RV8803_REGISTER_FLAG,
 								RV8803_FLAG_MASK_ALARM,
 								RV8803_FLAG_MASK_ALARM);
-			if (err < 0) return err;
+			if (err < 0) LOG_ERR("Alarm worker I2C update FLAG error");
 		}
 	}
 }
