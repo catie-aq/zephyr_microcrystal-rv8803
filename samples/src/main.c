@@ -10,8 +10,8 @@
 #include <time.h>
 #include <string.h>
 
-#define RTC_TEST_GET_SET_TIME	  (1767225595UL) // Wed Dec 31 2025 23:59:55 GMT+0000
-#define TIME_SIZE 64
+#define RTC_TEST_GET_SET_TIME (1767225595UL) // Wed Dec 31 2025 23:59:55 GMT+0000
+#define TIME_SIZE             64
 
 static const struct device *rtc = DEVICE_DT_GET(DT_NODELABEL(rv88030));
 
@@ -47,24 +47,17 @@ int main(void)
 	if (rtc_alarm_set_time(rtc, 0, RTC_ALARM_TIME_MASK_MINUTE, &datetime_alarm)) {
 		printk("Failed to set alarm time using rtc_alarm_set_time()\r\n");
 	}
-	printk("Setter[%ld] datetime [%d|%d %d:%d]\r\n",
-			RTC_ALARM_TIME_MASK_MINUTE,
-			datetime_alarm.tm_wday,
-			datetime_alarm.tm_mday,
-			datetime_alarm.tm_hour,
-			datetime_alarm.tm_min);
-	
+	printk("Setter[%ld] datetime [%d|%d %d:%d]\r\n", RTC_ALARM_TIME_MASK_MINUTE,
+	       datetime_alarm.tm_wday, datetime_alarm.tm_mday, datetime_alarm.tm_hour,
+	       datetime_alarm.tm_min);
+
 	uint16_t value = 0;
 	if (rtc_alarm_get_time(rtc, 0, &value, &datetime_alarm)) {
 		printk("Failed to get alarm time using rtc_alarm_get_time()\r\n");
 	}
-	printk("Getter[%d] datetime [%d|%d %d:%d]\r\n",
-			value,
-			datetime_alarm.tm_wday,
-			datetime_alarm.tm_mday,
-			datetime_alarm.tm_hour,
-			datetime_alarm.tm_min);
-	
+	printk("Getter[%d] datetime [%d|%d %d:%d]\r\n", value, datetime_alarm.tm_wday,
+	       datetime_alarm.tm_mday, datetime_alarm.tm_hour, datetime_alarm.tm_min);
+
 	if (rtc_alarm_set_callback(rtc, 0, alarm_callback, NULL)) {
 		printk("Failed to set alarm callback using rtc_alarm_set_callback()\r\n");
 	}
