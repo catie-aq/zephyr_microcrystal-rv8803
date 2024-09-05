@@ -13,63 +13,62 @@
 
 #include <math.h>
 
-
 LOG_MODULE_REGISTER(RV8803, CONFIG_RTC_LOG_LEVEL);
 
 /* Calendar Registers */
-#define RV8803_REGISTER_SECONDS	0x00
-#define RV8803_REGISTER_MINUTES	0x01
-#define RV8803_REGISTER_HOURS	0x02
-#define RV8803_REGISTER_WEEKDAY	0x03
-#define RV8803_REGISTER_DATE	0x04
-#define RV8803_REGISTER_MONTH	0x05
-#define RV8803_REGISTER_YEAR	0x06
+#define RV8803_REGISTER_SECONDS 0x00
+#define RV8803_REGISTER_MINUTES 0x01
+#define RV8803_REGISTER_HOURS   0x02
+#define RV8803_REGISTER_WEEKDAY 0x03
+#define RV8803_REGISTER_DATE    0x04
+#define RV8803_REGISTER_MONTH   0x05
+#define RV8803_REGISTER_YEAR    0x06
 
 /* Alarm Registers */
-#define RV8803_REGISTER_ALARM_MINUTES	0x08
-#define RV8803_REGISTER_ALARM_HOURS		0x09
-#define RV8803_REGISTER_ALARM_WADA		0x0A
+#define RV8803_REGISTER_ALARM_MINUTES 0x08
+#define RV8803_REGISTER_ALARM_HOURS   0x09
+#define RV8803_REGISTER_ALARM_WADA    0x0A
 
 /* Control Registers */
-#define RV8803_REGISTER_EXTENSION	0x0D
-#define RV8803_REGISTER_FLAG		0x0E
-#define RV8803_REGISTER_CONTROL		0x0F
+#define RV8803_REGISTER_EXTENSION 0x0D
+#define RV8803_REGISTER_FLAG      0x0E
+#define RV8803_REGISTER_CONTROL   0x0F
 
 /* Data masks */
-#define RV8803_SECONDS_BITS	GENMASK(6, 0)
-#define RV8803_MINUTES_BITS	GENMASK(6, 0)
-#define RV8803_HOURS_BITS	GENMASK(5, 0)
-#define RV8803_WEEKDAY_BITS	GENMASK(6, 0)
-#define RV8803_DATE_BITS	GENMASK(5, 0)
-#define RV8803_MONTH_BITS	GENMASK(4, 0)
-#define RV8803_YEAR_BITS	GENMASK(7, 0)
+#define RV8803_SECONDS_BITS GENMASK(6, 0)
+#define RV8803_MINUTES_BITS GENMASK(6, 0)
+#define RV8803_HOURS_BITS   GENMASK(5, 0)
+#define RV8803_WEEKDAY_BITS GENMASK(6, 0)
+#define RV8803_DATE_BITS    GENMASK(5, 0)
+#define RV8803_MONTH_BITS   GENMASK(4, 0)
+#define RV8803_YEAR_BITS    GENMASK(7, 0)
 
 /* Registers Mask */
-#define RV8803_EXTENSION_MASK_WADA		(0x01 << 6)
-#define RV8803_FLAG_MASK_ALARM			(0x01 << 3)
-#define RV8803_CONTROL_MASK_ALARM		(0x01 << 3)
-#define RV8803_ALARM_ENABLE_MINUTES		(0x00 << 7)
-#define RV8803_ALARM_ENABLE_HOURS		(0x00 << 7)
-#define RV8803_ALARM_ENABLE_WADA		(0x00 << 7)
-#define RV8803_ALARM_DISABLE_MINUTES	(0x01 << 7)
-#define RV8803_ALARM_DISABLE_HOURS		(0x01 << 7)
-#define RV8803_ALARM_DISABLE_WADA		(0x01 << 7)
-#define RV8803_ALARM_MASK_MINUTES		RV8803_ALARM_DISABLE_MINUTES
-#define RV8803_ALARM_MASK_HOURS			RV8803_ALARM_DISABLE_HOURS
-#define RV8803_ALARM_MASK_WADA			RV8803_ALARM_DISABLE_WADA
+#define RV8803_EXTENSION_MASK_WADA   (0x01 << 6)
+#define RV8803_FLAG_MASK_ALARM       (0x01 << 3)
+#define RV8803_CONTROL_MASK_ALARM    (0x01 << 3)
+#define RV8803_ALARM_ENABLE_MINUTES  (0x00 << 7)
+#define RV8803_ALARM_ENABLE_HOURS    (0x00 << 7)
+#define RV8803_ALARM_ENABLE_WADA     (0x00 << 7)
+#define RV8803_ALARM_DISABLE_MINUTES (0x01 << 7)
+#define RV8803_ALARM_DISABLE_HOURS   (0x01 << 7)
+#define RV8803_ALARM_DISABLE_WADA    (0x01 << 7)
+#define RV8803_ALARM_MASK_MINUTES    RV8803_ALARM_DISABLE_MINUTES
+#define RV8803_ALARM_MASK_HOURS      RV8803_ALARM_DISABLE_HOURS
+#define RV8803_ALARM_MASK_WADA       RV8803_ALARM_DISABLE_WADA
 
 /* TM OFFSET */
-#define RV8803_TM_MONTH	1
+#define RV8803_TM_MONTH 1
 
 /* Control MACRO */
-#define RV8803_PARTIAL_SECONDS_INCR		59 // Check for partial incrementation when reads get 59 seconds
-#define RV8803_CORRECT_YEAR_LEAP_MIN	(2000 - 1900) // Diff between 2000 and tm base year 1900
-#define RV8803_CORRECT_YEAR_LEAP_MAX	(2099 - 1900) // Diff between 2099 and tm base year 1900
-#define RV8803_RESET_BIT				(0x01 << 0)
-#define RV8803_ENABLE_ALARM				(0x01 << 3)
-#define RV8803_DISABLE_ALARM			(0x00 << 3)
-#define RV8803_WEEKDAY_ALARM			(0x00 << 6)
-#define RV8803_MONTHDAY_ALARM			(0x01 << 6)
+#define RV8803_PARTIAL_SECONDS_INCR  59 // Check for partial incrementation when reads get 59 seconds
+#define RV8803_CORRECT_YEAR_LEAP_MIN (2000 - 1900) // Diff between 2000 and tm base year 1900
+#define RV8803_CORRECT_YEAR_LEAP_MAX (2099 - 1900) // Diff between 2099 and tm base year 1900
+#define RV8803_RESET_BIT             (0x01 << 0)
+#define RV8803_ENABLE_ALARM          (0x01 << 3)
+#define RV8803_DISABLE_ALARM         (0x00 << 3)
+#define RV8803_WEEKDAY_ALARM         (0x00 << 6)
+#define RV8803_MONTHDAY_ALARM        (0x01 << 6)
 
 #if DT_ANY_INST_HAS_PROP_STATUS_OKAY(irq_gpios)
 #if defined(CONFIG_RTC_ALARM)
@@ -100,7 +99,6 @@ struct rv8803_data {
 #endif
 #endif
 
-
 #if RV8803_IRQ_GPIO_USE_ALARM
 	rtc_alarm_callback alarm_cb;
 	void *alarm_cb_data;
@@ -108,24 +106,20 @@ struct rv8803_data {
 #endif
 };
 
-
 /* API */
-static int rv8803_set_time(const struct device *dev, const struct rtc_time *timeptr) {
+static int rv8803_set_time(const struct device *dev, const struct rtc_time *timeptr)
+{
 	// Valid date are between 2000 and 2099
-	if ((timeptr == NULL) || (timeptr->tm_year < RV8803_CORRECT_YEAR_LEAP_MIN) || (timeptr->tm_year > RV8803_CORRECT_YEAR_LEAP_MAX)) {
+	if ((timeptr == NULL) || (timeptr->tm_year < RV8803_CORRECT_YEAR_LEAP_MIN) ||
+	    (timeptr->tm_year > RV8803_CORRECT_YEAR_LEAP_MAX)) {
 		LOG_ERR("invalid time");
 		return -EINVAL;
 	}
 
 	LOG_DBG("Set time: year[%u] month[%u] mday[%u] wday[%u] hours[%u] minutes[%u] seconds[%u]",
-			timeptr->tm_year,
-			timeptr->tm_mon,
-			timeptr->tm_mday,
-			timeptr->tm_wday,
-			timeptr->tm_hour,
-			timeptr->tm_min,
-			timeptr->tm_sec);
-	
+		timeptr->tm_year, timeptr->tm_mon, timeptr->tm_mday, timeptr->tm_wday,
+		timeptr->tm_hour, timeptr->tm_min, timeptr->tm_sec);
+
 	// Init variables for i2c communication
 	const struct rv8803_config *config = dev->config;
 	uint8_t regs[7];
@@ -141,12 +135,14 @@ static int rv8803_set_time(const struct device *dev, const struct rtc_time *time
 	regs[6] = bin2bcd(timeptr->tm_year - RV8803_CORRECT_YEAR_LEAP_MIN) & RV8803_YEAR_BITS;
 
 	// Stopping time update clock
-    err = i2c_burst_read_dt(&config->i2c_bus, RV8803_REGISTER_CONTROL, control_reg, sizeof(control_reg));
+	err = i2c_burst_read_dt(&config->i2c_bus, RV8803_REGISTER_CONTROL, control_reg,
+				sizeof(control_reg));
 	if (err < 0) {
 		return err;
 	}
 	control_reg[0] |= RV8803_RESET_BIT;
-	err = i2c_burst_write_dt(&config->i2c_bus, RV8803_REGISTER_CONTROL, control_reg, sizeof(control_reg));
+	err = i2c_burst_write_dt(&config->i2c_bus, RV8803_REGISTER_CONTROL, control_reg,
+				 sizeof(control_reg));
 	if (err < 0) {
 		return err;
 	}
@@ -156,10 +152,12 @@ static int rv8803_set_time(const struct device *dev, const struct rtc_time *time
 
 	// Restart time update clock
 	control_reg[0] &= ~RV8803_RESET_BIT;
-    return i2c_burst_write_dt(&config->i2c_bus, RV8803_REGISTER_CONTROL, control_reg, sizeof(control_reg));
+	return i2c_burst_write_dt(&config->i2c_bus, RV8803_REGISTER_CONTROL, control_reg,
+				  sizeof(control_reg));
 }
 
-static int rv8803_get_time(const struct device *dev, struct rtc_time *timeptr) {
+static int rv8803_get_time(const struct device *dev, struct rtc_time *timeptr)
+{
 	if (timeptr == NULL) {
 		return -EINVAL;
 	}
@@ -178,7 +176,8 @@ static int rv8803_get_time(const struct device *dev, struct rtc_time *timeptr) {
 
 	// Check to confirm correct time
 	if ((regs1[0] & RV8803_SECONDS_BITS) == bin2bcd(59)) {
-		err = i2c_burst_read_dt(&config->i2c_bus, RV8803_REGISTER_SECONDS, regs2, sizeof(regs2));
+		err = i2c_burst_read_dt(&config->i2c_bus, RV8803_REGISTER_SECONDS, regs2,
+					sizeof(regs2));
 		if (err < 0) {
 			return err;
 		}
@@ -187,32 +186,28 @@ static int rv8803_get_time(const struct device *dev, struct rtc_time *timeptr) {
 		}
 	}
 
-	timeptr->tm_sec		= bcd2bin(correct[0] & RV8803_SECONDS_BITS);
-	timeptr->tm_min		= bcd2bin(correct[1] & RV8803_MINUTES_BITS);
-	timeptr->tm_hour	= bcd2bin(correct[2] & RV8803_HOURS_BITS);
-	timeptr->tm_wday	= log2(correct[3] & RV8803_WEEKDAY_BITS);
-	timeptr->tm_mday	= bcd2bin(correct[4] & RV8803_DATE_BITS);
-	timeptr->tm_mon		= bcd2bin(correct[5] & RV8803_MONTH_BITS) - RV8803_TM_MONTH;
-	timeptr->tm_year	= bcd2bin(correct[6] & RV8803_YEAR_BITS) + RV8803_CORRECT_YEAR_LEAP_MIN;
+	timeptr->tm_sec = bcd2bin(correct[0] & RV8803_SECONDS_BITS);
+	timeptr->tm_min = bcd2bin(correct[1] & RV8803_MINUTES_BITS);
+	timeptr->tm_hour = bcd2bin(correct[2] & RV8803_HOURS_BITS);
+	timeptr->tm_wday = log2(correct[3] & RV8803_WEEKDAY_BITS);
+	timeptr->tm_mday = bcd2bin(correct[4] & RV8803_DATE_BITS);
+	timeptr->tm_mon = bcd2bin(correct[5] & RV8803_MONTH_BITS) - RV8803_TM_MONTH;
+	timeptr->tm_year = bcd2bin(correct[6] & RV8803_YEAR_BITS) + RV8803_CORRECT_YEAR_LEAP_MIN;
 
 	// Unused
-	timeptr->tm_nsec	= 0;
-	timeptr->tm_isdst	= -1;
-	timeptr->tm_yday	= -1;
+	timeptr->tm_nsec = 0;
+	timeptr->tm_isdst = -1;
+	timeptr->tm_yday = -1;
 
 	LOG_DBG("Get time: year[%u] month[%u] mday[%u] wday[%u] hours[%u] minutes[%u] seconds[%u]",
-			timeptr->tm_year,
-			timeptr->tm_mon,
-			timeptr->tm_mday,
-			timeptr->tm_wday,
-			timeptr->tm_hour,
-			timeptr->tm_min,
-			timeptr->tm_sec);
+		timeptr->tm_year, timeptr->tm_mon, timeptr->tm_mday, timeptr->tm_wday,
+		timeptr->tm_hour, timeptr->tm_min, timeptr->tm_sec);
 	return 0;
 }
 
 #if DT_ANY_INST_HAS_PROP_STATUS_OKAY(irq_gpios)
-static void rv8803_gpio_callback_handler(const struct device *p_port, struct gpio_callback *p_cb, gpio_port_pins_t pins)
+static void rv8803_gpio_callback_handler(const struct device *p_port, struct gpio_callback *p_cb,
+					 gpio_port_pins_t pins)
 {
 	ARG_UNUSED(p_port);
 	ARG_UNUSED(pins);
@@ -266,12 +261,13 @@ static int rv8803_alarm_get_supported_fields(const struct device *dev, uint16_t 
 	ARG_UNUSED(dev);
 	ARG_UNUSED(id);
 
-	(*mask) = 	(RTC_ALARM_TIME_MASK_MINUTE | RTC_ALARM_TIME_MASK_HOUR |
-				RTC_ALARM_TIME_MASK_MONTHDAY | RTC_ALARM_TIME_MASK_WEEKDAY);
+	(*mask) = (RTC_ALARM_TIME_MASK_MINUTE | RTC_ALARM_TIME_MASK_HOUR |
+		   RTC_ALARM_TIME_MASK_MONTHDAY | RTC_ALARM_TIME_MASK_WEEKDAY);
 
 	return 0;
 }
-static int rv8803_alarm_set_time(const struct device *dev, uint16_t id, uint16_t mask, const struct rtc_time *timeptr)
+static int rv8803_alarm_set_time(const struct device *dev, uint16_t id, uint16_t mask,
+				 const struct rtc_time *timeptr)
 {
 	ARG_UNUSED(id);
 	const struct rv8803_config *config = dev->config;
@@ -289,42 +285,42 @@ static int rv8803_alarm_set_time(const struct device *dev, uint16_t id, uint16_t
 
 	// Mask = 0 : Remove alarm interrupt
 	if (mask == 0) {
-		err = i2c_reg_update_byte_dt(&config->i2c_bus,
-									RV8803_REGISTER_CONTROL,
-					    			RV8803_CONTROL_MASK_ALARM,
-					    			RV8803_DISABLE_ALARM);
-		if (err < 0) return err;
-		err = i2c_reg_update_byte_dt(&config->i2c_bus,
-									RV8803_REGISTER_FLAG,
-					    			RV8803_FLAG_MASK_ALARM,
-					    			RV8803_DISABLE_ALARM);
-		if (err < 0) return err;
+		err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_CONTROL,
+					     RV8803_CONTROL_MASK_ALARM, RV8803_DISABLE_ALARM);
+		if (err < 0) {
+			return err;
+		}
+		err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG,
+					     RV8803_FLAG_MASK_ALARM, RV8803_DISABLE_ALARM);
+		if (err < 0) {
+			return err;
+		}
 
 		return 0;
 	}
 
 	// AIE and AF to 0 -> stop interrupt and clear interrupt flags
-	err = i2c_reg_update_byte_dt(&config->i2c_bus,
-								RV8803_REGISTER_CONTROL,
-								RV8803_CONTROL_MASK_ALARM,
-								RV8803_DISABLE_ALARM);
-	if (err < 0) return err;
-	err = i2c_reg_update_byte_dt(&config->i2c_bus,
-								RV8803_REGISTER_FLAG,
-								RV8803_FLAG_MASK_ALARM,
-								RV8803_DISABLE_ALARM);
-	if (err < 0) return err;
+	err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_CONTROL,
+				     RV8803_CONTROL_MASK_ALARM, RV8803_DISABLE_ALARM);
+	if (err < 0) {
+		return err;
+	}
+	err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG, RV8803_FLAG_MASK_ALARM,
+				     RV8803_DISABLE_ALARM);
+	if (err < 0) {
+		return err;
+	}
 
 	// Set WADA to 0 or 1
 	uint8_t wada = RV8803_WEEKDAY_ALARM;
 	if (mask && RTC_ALARM_TIME_MASK_MONTHDAY) {
 		wada = RV8803_MONTHDAY_ALARM;
 	}
-	err = i2c_reg_update_byte_dt(&config->i2c_bus,
-								RV8803_REGISTER_EXTENSION,
-								RV8803_EXTENSION_MASK_WADA,
-								wada);
-	if (err < 0) return err;
+	err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_EXTENSION,
+				     RV8803_EXTENSION_MASK_WADA, wada);
+	if (err < 0) {
+		return err;
+	}
 
 	// Set desired time and alarm
 	uint8_t regs[3];
@@ -352,20 +348,24 @@ static int rv8803_alarm_set_time(const struct device *dev, uint16_t id, uint16_t
 		regs[2] = RV8803_ALARM_DISABLE_WADA;
 	}
 
-	err = i2c_burst_write_dt(&config->i2c_bus, RV8803_REGISTER_ALARM_MINUTES, regs, sizeof(regs));
-	if (err < 0) return err;
+	err = i2c_burst_write_dt(&config->i2c_bus, RV8803_REGISTER_ALARM_MINUTES, regs,
+				 sizeof(regs));
+	if (err < 0) {
+		return err;
+	}
 
 	// AIE 1 -> activate interrupt
-	err = i2c_reg_update_byte_dt(&config->i2c_bus,
-								RV8803_REGISTER_CONTROL,
-								RV8803_CONTROL_MASK_ALARM,
-								RV8803_ENABLE_ALARM);
-	if (err < 0) return err;
+	err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_CONTROL,
+				     RV8803_CONTROL_MASK_ALARM, RV8803_ENABLE_ALARM);
+	if (err < 0) {
+		return err;
+	}
 
 	return 0;
 }
 
-static int rv8803_alarm_get_time(const struct device *dev, uint16_t id, uint16_t *mask, struct rtc_time *timeptr)
+static int rv8803_alarm_get_time(const struct device *dev, uint16_t id, uint16_t *mask,
+				 struct rtc_time *timeptr)
 {
 	ARG_UNUSED(id);
 	const struct rv8803_config *config = dev->config;
@@ -377,8 +377,11 @@ static int rv8803_alarm_get_time(const struct device *dev, uint16_t id, uint16_t
 	(*mask) = 0;
 
 	uint8_t regs[3];
-	err = i2c_burst_read_dt(&config->i2c_bus, RV8803_REGISTER_ALARM_MINUTES, regs, sizeof(regs));
-	if (err < 0) return err;
+	err = i2c_burst_read_dt(&config->i2c_bus, RV8803_REGISTER_ALARM_MINUTES, regs,
+				sizeof(regs));
+	if (err < 0) {
+		return err;
+	}
 
 	if ((regs[0] & RV8803_ALARM_MASK_MINUTES) == RV8803_ALARM_ENABLE_MINUTES) {
 		(*mask) |= RTC_ALARM_TIME_MASK_MINUTE;
@@ -393,7 +396,9 @@ static int rv8803_alarm_get_time(const struct device *dev, uint16_t id, uint16_t
 	if ((regs[2] & RV8803_ALARM_MASK_WADA) == RV8803_ALARM_ENABLE_WADA) {
 		uint8_t wada;
 		err = i2c_reg_read_byte_dt(&config->i2c_bus, RV8803_REGISTER_EXTENSION, &wada);
-		if (err < 0) return err;
+		if (err < 0) {
+			return err;
+		}
 
 		if ((wada & RV8803_EXTENSION_MASK_WADA) == RV8803_WEEKDAY_ALARM) {
 			(*mask) |= RTC_ALARM_TIME_MASK_WEEKDAY;
@@ -415,14 +420,16 @@ static int rv8803_alarm_is_pending(const struct device *dev, uint16_t id)
 	int err;
 
 	err = i2c_reg_read_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG, &reg);
-	if (err < 0) return err;
+	if (err < 0) {
+		return err;
+	}
 
 	if (reg & RV8803_FLAG_MASK_ALARM) {
-		err = i2c_reg_update_byte_dt(&config->i2c_bus,
-								RV8803_REGISTER_FLAG,
-								RV8803_FLAG_MASK_ALARM,
-								RV8803_DISABLE_ALARM);
-		if (err < 0) return err;
+		err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG,
+					     RV8803_FLAG_MASK_ALARM, RV8803_DISABLE_ALARM);
+		if (err < 0) {
+			return err;
+		}
 
 		return 1;
 	}
@@ -430,7 +437,8 @@ static int rv8803_alarm_is_pending(const struct device *dev, uint16_t id)
 	return 0;
 }
 
-static int rv8803_alarm_set_callback(const struct device *dev, uint16_t id, rtc_alarm_callback callback, void *user_data)
+static int rv8803_alarm_set_callback(const struct device *dev, uint16_t id,
+				     rtc_alarm_callback callback, void *user_data)
 {
 	ARG_UNUSED(id);
 	const struct rv8803_config *config = dev->config;
@@ -457,17 +465,19 @@ static void rv8803_alarm_worker(struct k_work *p_work)
 		uint8_t reg;
 
 		err = i2c_reg_read_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG, &reg);
-		if (err < 0) LOG_ERR("Alarm worker I2C read FLAGS error");
+		if (err < 0) {
+			LOG_ERR("Alarm worker I2C read FLAGS error");
+		}
 
 		if (reg & RV8803_FLAG_MASK_ALARM) {
 			LOG_DBG("Calling Alarm callback");
 			data->alarm_cb(data->dev, 0, data->alarm_cb_data);
 
-			err = i2c_reg_update_byte_dt(&config->i2c_bus,
-								RV8803_REGISTER_FLAG,
-								RV8803_FLAG_MASK_ALARM,
-								RV8803_DISABLE_ALARM);
-			if (err < 0) LOG_ERR("Alarm worker I2C update FLAG error");
+			err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG,
+						     RV8803_FLAG_MASK_ALARM, RV8803_DISABLE_ALARM);
+			if (err < 0) {
+				LOG_ERR("Alarm worker I2C update FLAG error");
+			}
 		}
 	}
 }
@@ -483,7 +493,8 @@ static int rv8803_init(const struct device *dev)
 		return -ENODEV;
 	}
 #if RV8803_IRQ_GPIO_IN_USE
-	LOG_INF("IRQ handle: [%s][%d][%d]!", config->irq_gpio.port->name, config->irq_gpio.pin, config->irq_gpio.dt_flags);
+	LOG_INF("IRQ handle: [%s][%d][%d]!", config->irq_gpio.port->name, config->irq_gpio.pin,
+		config->irq_gpio.dt_flags);
 #endif
 
 #if RV8803_IRQ_GPIO_IN_USE
@@ -532,18 +543,18 @@ static const struct rtc_driver_api rv8803_driver_api = {
 	.get_time = rv8803_get_time,
 #if CONFIG_RTC_ALARM
 	.alarm_get_supported_fields = rv8803_alarm_get_supported_fields,
-	.alarm_set_time				= rv8803_alarm_set_time,
-	.alarm_get_time				= rv8803_alarm_get_time,
-	.alarm_is_pending			= rv8803_alarm_is_pending,
-	.alarm_set_callback			= rv8803_alarm_set_callback,
+	.alarm_set_time = rv8803_alarm_set_time,
+	.alarm_get_time = rv8803_alarm_get_time,
+	.alarm_is_pending = rv8803_alarm_is_pending,
+	.alarm_set_callback = rv8803_alarm_set_callback,
 #endif
 };
 
-#define RV8803_INIT(n)                                                                         \
+#define RV8803_INIT(n)                                                                             \
 	static const struct rv8803_config rv8803_config_##n = {                                    \
-		.i2c_bus = I2C_DT_SPEC_INST_GET(n),                                                    \
-		IF_ENABLED(RV8803_IRQ_GPIO_IN_USE,                                                     \
-		(.irq_gpio = GPIO_DT_SPEC_INST_GET_OR(n, irq_gpios, {0}))),                            \
+		.i2c_bus = I2C_DT_SPEC_INST_GET(n),                                                \
+		IF_ENABLED(RV8803_IRQ_GPIO_IN_USE,                                                 \
+			   (.irq_gpio = GPIO_DT_SPEC_INST_GET_OR(n, irq_gpios, {0}))),             \
 	};                                                                                         \
 	static struct rv8803_data rv8803_data_##n;                                                 \
 	DEVICE_DT_INST_DEFINE(n, rv8803_init, NULL, &rv8803_data_##n, &rv8803_config_##n,          \
