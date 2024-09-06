@@ -1,0 +1,9 @@
+sample:
+  description: Demonstration of the RV-8803 RTC driver
+  name: RV-8803 Sample
+tests:
+  sample.default:
+    tags: rtc
+    integration_platforms:
+      - zest_core_stm32l4a6rg
+    depends_on: i2c
