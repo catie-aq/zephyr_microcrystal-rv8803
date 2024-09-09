@@ -8,3 +8,5 @@ Implemented feature:
 * [X] Basic time setter/getter
 * [X] Alarm Interface
 * [ ] Update Interface
+* [ ] Low battery interrupt
+* [ ] CLK out configuration
