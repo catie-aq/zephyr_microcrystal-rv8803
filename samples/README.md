@@ -2,9 +2,9 @@
 
 This sample application provides an example usage of the RTC RV8803 from Microcrystal AG.
 
-* It sets the RTC time to the `Wed Dec 31 2025 23:59:55 GMT+0000`
-* It sets an alarm to send an interrupt each time the RTC time reaches the minute `01`.
-* It gets the RTC time and prints it each second.
+- It sets the RTC time to the `Wed Dec 31 2025 23:59:55 GMT+0000`
+- It sets an alarm to send an interrupt each time the RTC time reaches the minute `01`.
+- It gets the RTC time and prints it each second.
 
 > [!NOTE]
 > Alarms can not trigger more often than every minute.
@@ -19,8 +19,8 @@ This sample application provides an example usage of the RTC RV8803 from Microcr
 
 # References
 
-* [RV-8803-C7 Component](https://www.microcrystal.com/fileadmin/Media/Products/RTC/Datasheet/RV-8803-C7.pdf).
-* [RV-8803-C7 Datasheet](https://www.microcrystal.com/fileadmin/Media/Products/RTC/App.Manual/RV-8803-C7_App-Manual.pdf).
+- [RV-8803-C7 Component](https://www.microcrystal.com/fileadmin/Media/Products/RTC/Datasheet/RV-8803-C7.pdf).
+- [RV-8803-C7 Datasheet](https://www.microcrystal.com/fileadmin/Media/Products/RTC/App.Manual/RV-8803-C7_App-Manual.pdf).
 
 # Building and Running
 
