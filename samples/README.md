@@ -10,7 +10,7 @@ This sample application provides an example usage of the RTC RV8803 from Microcr
 
 # Requirements
 
-- Power Supply : RTC components usually require additional battery cell.
+- Power Supply: RTC components usually require an additional battery cell.
 - Board allowing I2C communication.
 - Available IRQ GPIO for Alarm and Update interrupts.
 - `CONFIG_RTC=y` in prj.conf to use RTC.
