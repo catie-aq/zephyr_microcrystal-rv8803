@@ -6,7 +6,8 @@ This sample application provides an example usage of the RTC RV8803 from Microcr
 * It sets an alarm to send an interrupt each time the RTC time reaches the minute `01`.
 * It gets the RTC time and prints it each second.
 
-> NOTE: Alarms can not trigger more than every minute.
+> [!NOTE]
+> Alarms can not trigger more often than every minute.
 
 # Requirements
 
