@@ -20,6 +20,11 @@ void alarm_callback(const struct device *dev, uint16_t id, void *user_data)
 	printk("RTC Alarm detected!!\n");
 }
 
+void update_callback(const struct device *dev, void *user_data)
+{
+	printk("RTC Update detected!!\n");
+}
+
 int main(void)
 {
 	struct rtc_time datetime_set, datetime_get, datetime_alarm;
@@ -40,6 +45,7 @@ int main(void)
 		printk("Failed to get time using rtc_time_get()\n");
 	}
 
+	// Alarm setup
 	datetime_alarm.tm_min = 1;
 	datetime_alarm.tm_hour = 0;
 	datetime_alarm.tm_mday = 0;
@@ -59,6 +65,11 @@ int main(void)
 	       datetime_alarm.tm_mday, datetime_alarm.tm_hour, datetime_alarm.tm_min);
 
 	if (rtc_alarm_set_callback(rtc, 0, alarm_callback, NULL)) {
+		printk("Failed to set alarm callback using rtc_alarm_set_callback()\n");
+	}
+
+	// Update setup
+	if (rtc_update_set_callback(rtc, update_callback, NULL)) {
 		printk("Failed to set alarm callback using rtc_alarm_set_callback()\n");
 	}
 
