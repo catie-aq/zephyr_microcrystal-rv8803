@@ -57,6 +57,10 @@ LOG_MODULE_REGISTER(RV8803, CONFIG_RTC_LOG_LEVEL);
 #define RV8803_ALARM_MASK_HOURS      RV8803_ALARM_DISABLE_HOURS
 #define RV8803_ALARM_MASK_WADA       RV8803_ALARM_DISABLE_WADA
 
+#define RV8803_EXTENSION_MASK_UPDATE (0x01 << 5)
+#define RV8803_FLAG_MASK_UPDATE      (0x01 << 5)
+#define RV8803_CONTROL_MASK_UPDATE   (0x01 << 5)
+
 /* TM OFFSET */
 #define RV8803_TM_MONTH 1
 
@@ -69,6 +73,10 @@ LOG_MODULE_REGISTER(RV8803, CONFIG_RTC_LOG_LEVEL);
 #define RV8803_DISABLE_ALARM         (0x00 << 3)
 #define RV8803_WEEKDAY_ALARM         (0x00 << 6)
 #define RV8803_MONTHDAY_ALARM        (0x01 << 6)
+#define RV8803_UPDATE_PERIOD_SECOND  (0x00 << 5)
+#define RV8803_UPDATE_PERIOD_MINUTE  (0x01 << 5)
+#define RV8803_ENABLE_UPDATE         (0x01 << 5)
+#define RV8803_DISABLE_UPDATE        (0x00 << 5)
 
 #if DT_ANY_INST_HAS_PROP_STATUS_OKAY(irq_gpios)
 #if defined(CONFIG_RTC_ALARM)
@@ -94,6 +102,7 @@ struct rv8803_config {
 struct rv8803_data {
 #if DT_ANY_INST_HAS_PROP_STATUS_OKAY(irq_gpios)
 	struct gpio_callback gpio_cb;
+	struct k_work gpio_work;
 #if RV8803_IRQ_GPIO_IN_USE
 	const struct device *dev;
 #endif
@@ -102,7 +111,10 @@ struct rv8803_data {
 #if RV8803_IRQ_GPIO_USE_ALARM
 	rtc_alarm_callback alarm_cb;
 	void *alarm_cb_data;
-	struct k_work alarm_work;
+#endif
+#if RV8803_IRQ_GPIO_USE_UPDATE
+	rtc_update_callback update_cb;
+	void *update_cb_data;
 #endif
 };
 
@@ -214,8 +226,52 @@ static void rv8803_gpio_callback_handler(const struct device *p_port, struct gpi
 
 	struct rv8803_data *data = CONTAINER_OF(p_cb, struct rv8803_data, gpio_cb);
 
+	k_work_submit(&data->gpio_work); // Using work queue to exit isr context
+}
+
+static void rv8803_gpio_worker(struct k_work *p_work)
+{
+	struct rv8803_data *data = CONTAINER_OF(p_work, struct rv8803_data, gpio_work);
+	const struct rv8803_config *config = data->dev->config;
+	uint8_t reg;
+	int err;
+
+	LOG_DBG("Process Alarm worker from interrupt");
+
+	err = i2c_reg_read_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG, &reg);
+	if (err < 0) {
+		LOG_ERR("Alarm worker I2C read FLAGS error");
+	}
+
 #if CONFIG_RTC_ALARM
-	k_work_submit(&data->alarm_work); // Using work queue to exit isr context
+	if (reg & RV8803_FLAG_MASK_ALARM) {
+		if (data->alarm_cb != NULL) {
+			LOG_DBG("Calling Alarm callback");
+			data->alarm_cb(data->dev, 0, data->alarm_cb_data);
+
+			err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG,
+						     RV8803_FLAG_MASK_ALARM, RV8803_DISABLE_ALARM);
+			if (err < 0) {
+				LOG_ERR("GPIO worker I2C update ALARM FLAG error");
+			}
+		}
+	}
+#endif
+
+#if CONFIG_RTC_UPDATE
+	if (reg & RV8803_FLAG_MASK_UPDATE) {
+		if (data->update_cb != NULL) {
+			LOG_DBG("Calling Update callback");
+			data->update_cb(data->dev, data->update_cb_data);
+
+			err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG,
+						     RV8803_FLAG_MASK_UPDATE,
+						     RV8803_DISABLE_UPDATE);
+			if (err < 0) {
+				LOG_ERR("GPIO worker I2C update UPDATE FLAG error");
+			}
+		}
+	}
 #endif
 }
 #endif
@@ -481,7 +537,7 @@ static void rv8803_alarm_worker(struct k_work *p_work)
 		}
 	}
 }
-#endif // CONFIG_RTC_ALARM
+#endif
 
 static int rv8803_init(const struct device *dev)
 {
@@ -527,12 +583,16 @@ static int rv8803_init(const struct device *dev)
 
 #if DT_ANY_INST_HAS_PROP_STATUS_OKAY(irq_gpios)
 	data->dev = dev;
+	data->gpio_work.handler = rv8803_gpio_worker;
 #endif
 
 #if RV8803_IRQ_GPIO_USE_ALARM
 	data->alarm_cb = NULL;
 	data->alarm_cb_data = NULL;
-	data->alarm_work.handler = rv8803_alarm_worker;
+#endif
+#if RV8803_IRQ_GPIO_USE_UPDATE
+	data->update_cb = NULL;
+	data->update_cb_data = NULL;
 #endif
 
 	return 0;
@@ -547,6 +607,9 @@ static const struct rtc_driver_api rv8803_driver_api = {
 	.alarm_get_time = rv8803_alarm_get_time,
 	.alarm_is_pending = rv8803_alarm_is_pending,
 	.alarm_set_callback = rv8803_alarm_set_callback,
+#endif
+#if CONFIG_RTC_UPDATE
+	.update_set_callback = rv8803_update_set_callback,
 #endif
 };
 
