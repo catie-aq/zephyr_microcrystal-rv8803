@@ -149,14 +149,11 @@ static int rv8803_rtc_set_time(const struct device *dev, const struct rtc_time *
 	regs[6] = bin2bcd(timeptr->tm_year - RV8803_CORRECT_YEAR_LEAP_MIN) & RV8803_YEAR_BITS;
 
 	// Stopping time update clock
-	LOG_INF("READ");
-	LOG_INF("I2C[0x%02X]", config->i2c_bus.addr);
 	err = i2c_burst_read_dt(&config->i2c_bus, RV8803_REGISTER_CONTROL, control_reg,
 				sizeof(control_reg));
 	if (err < 0) {
 		return err;
 	}
-	LOG_INF("READ!!");
 	control_reg[0] |= RV8803_RESET_BIT;
 	err = i2c_burst_write_dt(&config->i2c_bus, RV8803_REGISTER_CONTROL, control_reg,
 				 sizeof(control_reg));
@@ -511,12 +508,13 @@ static void rv8803_rtc_alarm_worker(struct k_work *p_work)
 static int rv8803_init(const struct device *dev)
 {
 	const struct rv8803_config *config = dev->config;
-	LOG_INF("RV8803 INIT");
 
 	if (!i2c_is_ready_dt(&config->i2c_bus)) {
 		LOG_ERR("I2C bus not ready!!");
 		return -ENODEV;
 	}
+	LOG_INF("RV8803 INIT");
+
 	return 0;
 }
 
@@ -525,12 +523,11 @@ static int rv8803_init(const struct device *dev)
 static int rv8803_rtc_init(const struct device *dev)
 {
 	const struct rv8803_rtc_config *config = dev->config;
-	LOG_INF("RTC INIT");
 
 	if (!device_is_ready(config->base_dev)) {
 		return -ENODEV;
 	}
-	LOG_INF("RTC base INIT");
+	LOG_INF("RV8803 RTC INIT");
 
 #if RV8803_IRQ_GPIO_IN_USE
 	struct rv8803_rtc_data *data = dev->data;
@@ -600,7 +597,7 @@ static const struct rtc_driver_api rv8803_rtc_driver_api = {
 
 #define RV8803_RTC_INIT(n)                                                                         \
 	static const struct rv8803_rtc_config rv8803_rtc_config_##n = {                            \
-		.base_dev = DEVICE_DT_GET(DT_INST_BUS(n)),                                         \
+		.base_dev = DEVICE_DT_GET(DT_PARENT(DT_INST(n, DT_DRV_COMPAT))),                   \
 		IF_ENABLED(RV8803_IRQ_GPIO_IN_USE,                                                 \
 			   (.irq_gpio = GPIO_DT_SPEC_INST_GET_OR(n, irq_gpios, {0}))),             \
 	};                                                                                         \
