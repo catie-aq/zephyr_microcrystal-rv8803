@@ -10,3 +10,19 @@ menuconfig RV8803
     select I2C
     help
       Enable driver for MICRO CRYSTAL RV-8803 smt real-time clock module on i2c-bus
+
+if RV8803
+  config RV8803_RTC_ENABLE
+    bool "RV8803 RTC ENABLE"
+    default y
+    depends on RV8803
+    help
+      Enable RTC module.
+
+  config RV8803_CLK_ENABLE
+    bool "RV8803 CLK OUT ENABLE"
+    default n
+    depends on RV8803
+    help
+      Enable Clock OUT module.
+endif # RV8803

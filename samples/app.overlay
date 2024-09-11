@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
- #include <zephyr/dt-bindings/gpio/sixtron-header.h>
+#include <zephyr/dt-bindings/gpio/sixtron-header.h>
 
- &sixtron_i2c {
+&sixtron_i2c {
 	status = "okay";
 
 	rv88030: rv8803@32 {
@@ -18,9 +18,10 @@
 			irq-gpios = <&sixtron_connector DIO2 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
 		};
 
-//		rv8803_clk {
-//			compatible = "microcrystal,rv8803-clk";
-//			clk-gpios = <&sixtron_connector DIO3 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
-//		}
+		rv8803_clk {
+			compatible = "microcrystal,rv8803-clk";
+			#clock-cells = <0>;
+			clk-gpios = <&sixtron_connector DIO3 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
+		};
 	};
 };
