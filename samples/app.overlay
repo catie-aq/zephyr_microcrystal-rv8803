@@ -21,7 +21,6 @@
 		rv8803_clk {
 			compatible = "microcrystal,rv8803-clk";
 			#clock-cells = <0>;
-			clk-gpios = <&sixtron_connector DIO3 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
 		};
 	};
 };
