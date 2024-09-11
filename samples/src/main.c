@@ -13,7 +13,10 @@
 #define RTC_TEST_GET_SET_TIME (1767225595UL) // Wed Dec 31 2025 23:59:55 GMT+0000
 #define TIME_SIZE             64
 
-static const struct device *rtc = DEVICE_DT_GET(DT_NODELABEL(rv88030));
+#define RV8803_NODE     DT_NODELABEL(rv88030)
+#define RV8803_RTC_NODE DT_CHILD(RV8803_NODE, rv8803_rtc)
+
+static const struct device *rtc = DEVICE_DT_GET(RV8803_RTC_NODE);
 
 void alarm_callback(const struct device *dev, uint16_t id, void *user_data)
 {
@@ -29,6 +32,7 @@ int main(void)
 		printk("Device is not ready\n");
 		return 1;
 	}
+	printk("RTC device is ready\n");
 
 	time_t timer_set = RTC_TEST_GET_SET_TIME;
 	gmtime_r(&timer_set, (struct tm *)(&datetime_set));
@@ -36,9 +40,11 @@ int main(void)
 	if (rtc_set_time(rtc, &datetime_set) != 0) {
 		printk("Failed to set time\n");
 	}
+	printk("RTC set time succeed\n");
 	if (rtc_get_time(rtc, &datetime_get) != 0) {
 		printk("Failed to get time using rtc_time_get()\n");
 	}
+	printk("RTC get time succeed\n");
 
 	datetime_alarm.tm_min = 1;
 	datetime_alarm.tm_hour = 0;
