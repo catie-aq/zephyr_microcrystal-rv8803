@@ -10,7 +10,7 @@
 #include <zephyr/drivers/rtc.h>
 #include <zephyr/sys/util.h>
 
-// #include <zephyr/drivers/clock_control.h>
+#include <zephyr/drivers/clock_control.h>
 
 #include <math.h>
 
@@ -73,16 +73,24 @@ LOG_MODULE_REGISTER(RV8803, CONFIG_RTC_LOG_LEVEL);
 
 #define DT_DRV_COMPAT microcrystal_rv8803_rtc
 #if DT_ANY_INST_HAS_PROP_STATUS_OKAY(irq_gpios)
+#if CONFIG_RV8803_RTC_ENABLE
 #if defined(CONFIG_RTC_ALARM)
 #define RV8803_IRQ_GPIO_USE_ALARM 1
-#endif
+#endif // CONFIG_RTC_ALARM
 #if defined(CONFIG_RTC_UPDATE)
 #define RV8803_IRQ_GPIO_USE_UPDATE 1
-#endif
-#endif
+#endif // CONFIG_RTC_UPDATE
+#endif // CONFIG_RV8803_RTC_ENABLE
+#endif // DT_ANY_INST_HAS_PROP_STATUS_OKAY
 
 #if defined(RV8803_IRQ_GPIO_USE_ALARM) || defined(RV8803_IRQ_GPIO_USE_UPDATE)
 #define RV8803_IRQ_GPIO_IN_USE 1
+#endif
+#undef DT_DRV_COMPAT
+
+#define DT_DRV_COMPAT microcrystal_rv8803_clk
+#if DT_ANY_INST_HAS_PROP_STATUS_OKAY(clk_gpios)
+#define RV8803_CLK_GPIO_IN_USE 1
 #endif
 #undef DT_DRV_COMPAT
 
@@ -92,16 +100,17 @@ struct rv8803_config {
 	struct i2c_dt_spec i2c_bus;
 };
 
+/* RV8803 Base data */
+struct rv8803_data {
+};
+
+#if CONFIG_RTC && CONFIG_RV8803_RTC_ENABLE
 /* RV8803 RTC config */
 struct rv8803_rtc_config {
 	const struct device *base_dev; // Parent device reference
 #if RV8803_IRQ_GPIO_IN_USE
 	const struct gpio_dt_spec irq_gpio;
 #endif
-};
-
-/* RV8803 Base data */
-struct rv8803_data {
 };
 
 /* RV8803 RTC data */
@@ -117,8 +126,33 @@ struct rv8803_rtc_data {
 	struct k_work alarm_work;
 #endif
 };
+#endif
 
-#if CONFIG_RTC
+#if CONFIG_CLOCK_CONTROL && CONFIG_RV8803_CLK_ENABLE
+/* RV8803 CLK config */
+struct rv8803_clk_config {
+	const struct device *base_dev; // Parent device reference
+#if RV8803_CLK_GPIO_IN_USE
+	const struct gpio_dt_spec clk_gpio;
+#endif
+};
+
+/* RV8803 CLK data */
+struct rv8803_clk_data {
+#if RV8803_IRQ_GPIO_IN_USE
+	struct gpio_callback gpio_cb;
+	const struct device *dev;
+#endif
+
+#if RV8803_IRQ_GPIO_USE_ALARM
+	rtc_alarm_callback clk_cb;
+	void *clk_cb_data;
+	struct k_work clk_work;
+#endif
+};
+#endif
+
+#if CONFIG_RTC && CONFIG_RV8803_RTC_ENABLE
 /* API */
 static int rv8803_rtc_set_time(const struct device *dev, const struct rtc_time *timeptr)
 {
@@ -502,8 +536,33 @@ static void rv8803_rtc_alarm_worker(struct k_work *p_work)
 	}
 }
 #endif // CONFIG_RTC_ALARM
-#endif
+#endif // CONFIG_RTC
 
+#if CONFIG_CLOCK_CONTROL && CONFIG_RV8803_CLK_ENABLE
+static int rv8803_clk_on(const struct device *dev, clock_control_subsys_t sys)
+{
+	return 0;
+}
+
+static int rv8803_clk_off(const struct device *dev, clock_control_subsys_t sys)
+{
+	return 0;
+}
+
+static int rv8803_clk_set_rate(const struct device *dev, clock_control_subsys_t sys,
+			       clock_control_subsys_rate_t rate)
+{
+	return 0;
+}
+
+static int rv8803_clk_get_rate(const struct device *dev, clock_control_subsys_t sys, uint32_t *rate)
+{
+	return 0;
+}
+
+#endif // CONFIG_CLOCK_CONTROL
+
+/* DEVICE Initialization */
 /* RV8803 base init */
 static int rv8803_init(const struct device *dev)
 {
@@ -518,7 +577,7 @@ static int rv8803_init(const struct device *dev)
 	return 0;
 }
 
-#if CONFIG_RTC
+#if CONFIG_RTC && CONFIG_RV8803_RTC_ENABLE
 /* RV8803 RTC init */
 static int rv8803_rtc_init(const struct device *dev)
 {
@@ -587,6 +646,29 @@ static const struct rtc_driver_api rv8803_rtc_driver_api = {
 };
 #endif
 
+#if CONFIG_CLOCK_CONTROL && CONFIG_RV8803_CLK_ENABLE
+/* RV8803 CLK init */
+static int rv8803_clk_init(const struct device *dev)
+{
+	const struct rv8803_clk_config *config = dev->config;
+
+	if (!device_is_ready(config->base_dev)) {
+		return -ENODEV;
+	}
+	LOG_INF("RV8803 CLK INIT");
+
+	return 0;
+}
+
+/* RV8803 RTC driver API */
+static const struct clock_control_driver_api rv8803_clk_driver_api = {
+	.on = rv8803_clk_on,
+	.off = rv8803_clk_off,
+	.set_rate = rv8803_clk_set_rate,
+	.get_rate = rv8803_clk_get_rate,
+};
+#endif
+
 #define RV8803_INIT(n)                                                                             \
 	static const struct rv8803_config rv8803_config_##n = {                                    \
 		.i2c_bus = I2C_DT_SPEC_INST_GET(n),                                                \
@@ -595,6 +677,7 @@ static const struct rtc_driver_api rv8803_rtc_driver_api = {
 	DEVICE_DT_INST_DEFINE(n, rv8803_init, NULL, &rv8803_data_##n, &rv8803_config_##n,          \
 			      POST_KERNEL, CONFIG_RTC_INIT_PRIORITY, NULL);
 
+#if CONFIG_RTC && CONFIG_RV8803_RTC_ENABLE
 #define RV8803_RTC_INIT(n)                                                                         \
 	static const struct rv8803_rtc_config rv8803_rtc_config_##n = {                            \
 		.base_dev = DEVICE_DT_GET(DT_PARENT(DT_INST(n, DT_DRV_COMPAT))),                   \
@@ -605,13 +688,36 @@ static const struct rtc_driver_api rv8803_rtc_driver_api = {
 	DEVICE_DT_INST_DEFINE(n, rv8803_rtc_init, NULL, &rv8803_rtc_data_##n,                      \
 			      &rv8803_rtc_config_##n, POST_KERNEL, CONFIG_RTC_INIT_PRIORITY,       \
 			      &rv8803_rtc_driver_api);
+#endif
+
+#if CONFIG_CLOCK_CONTROL && CONFIG_RV8803_CLK_ENABLE
+#define RV8803_CLK_INIT(n)                                                                         \
+	static const struct rv8803_clk_config rv8803_clk_config_##n = {                            \
+		.base_dev = DEVICE_DT_GET(DT_PARENT(DT_INST(n, DT_DRV_COMPAT))),                   \
+		IF_ENABLED(RV8803_CLK_GPIO_IN_USE,                                                 \
+			   (.clk_gpio = GPIO_DT_SPEC_INST_GET_OR(n, clk_gpios, {0}))),             \
+	};                                                                                         \
+	static struct rv8803_clk_data rv8803_clk_data_##n;                                         \
+	DEVICE_DT_INST_DEFINE(n, rv8803_clk_init, NULL, &rv8803_clk_data_##n,                      \
+			      &rv8803_clk_config_##n, POST_KERNEL, CONFIG_RTC_INIT_PRIORITY,       \
+			      &rv8803_clk_driver_api);
+#endif
 
 /* Instanciate RV8803 */
 #define DT_DRV_COMPAT microcrystal_rv8803
 DT_INST_FOREACH_STATUS_OKAY(RV8803_INIT)
 #undef DT_DRV_COMPAT
 
+#if CONFIG_RTC && CONFIG_RV8803_RTC_ENABLE
 /* Instanciate RV8803 RTC */
 #define DT_DRV_COMPAT microcrystal_rv8803_rtc
 DT_INST_FOREACH_STATUS_OKAY(RV8803_RTC_INIT)
 #undef DT_DRV_COMPAT
+#endif
+
+#if CONFIG_CLOCK_CONTROL && CONFIG_RV8803_CLK_ENABLE
+/* Instanciate RV8803 CLK */
+#define DT_DRV_COMPAT microcrystal_rv8803_clk
+DT_INST_FOREACH_STATUS_OKAY(RV8803_CLK_INIT)
+#undef DT_DRV_COMPAT
+#endif
