@@ -7,8 +7,3 @@ compatible: "microcrystal,rv8803-clk"
 
 include:
   - name: clock-controller.yaml
-
-properties:
-  clk-gpios:
-    type: phandle-array
-    description: Configures RV-8803 clk OUT signal.

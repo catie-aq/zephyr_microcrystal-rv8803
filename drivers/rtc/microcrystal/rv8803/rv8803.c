@@ -132,23 +132,10 @@ struct rv8803_rtc_data {
 /* RV8803 CLK config */
 struct rv8803_clk_config {
 	const struct device *base_dev; // Parent device reference
-#if RV8803_CLK_GPIO_IN_USE
-	const struct gpio_dt_spec clk_gpio;
-#endif
 };
 
 /* RV8803 CLK data */
 struct rv8803_clk_data {
-#if RV8803_IRQ_GPIO_IN_USE
-	struct gpio_callback gpio_cb;
-	const struct device *dev;
-#endif
-
-#if RV8803_IRQ_GPIO_USE_ALARM
-	rtc_alarm_callback clk_cb;
-	void *clk_cb_data;
-	struct k_work clk_work;
-#endif
 };
 #endif
 
@@ -539,16 +526,6 @@ static void rv8803_rtc_alarm_worker(struct k_work *p_work)
 #endif // CONFIG_RTC
 
 #if CONFIG_CLOCK_CONTROL && CONFIG_RV8803_CLK_ENABLE
-static int rv8803_clk_on(const struct device *dev, clock_control_subsys_t sys)
-{
-	return 0;
-}
-
-static int rv8803_clk_off(const struct device *dev, clock_control_subsys_t sys)
-{
-	return 0;
-}
-
 static int rv8803_clk_set_rate(const struct device *dev, clock_control_subsys_t sys,
 			       clock_control_subsys_rate_t rate)
 {
@@ -651,19 +628,20 @@ static const struct rtc_driver_api rv8803_rtc_driver_api = {
 static int rv8803_clk_init(const struct device *dev)
 {
 	const struct rv8803_clk_config *config = dev->config;
+	struct rv8803_clk_data *data = dev->data;
 
 	if (!device_is_ready(config->base_dev)) {
 		return -ENODEV;
 	}
 	LOG_INF("RV8803 CLK INIT");
 
+	data->enabled = false;
+
 	return 0;
 }
 
 /* RV8803 RTC driver API */
 static const struct clock_control_driver_api rv8803_clk_driver_api = {
-	.on = rv8803_clk_on,
-	.off = rv8803_clk_off,
 	.set_rate = rv8803_clk_set_rate,
 	.get_rate = rv8803_clk_get_rate,
 };
