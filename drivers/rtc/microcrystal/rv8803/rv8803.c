@@ -548,6 +548,10 @@ static int rv8803_clk_set_rate(const struct device *dev, clock_control_subsys_t 
 	}
 
 	uintptr_t u_rate = (uintptr_t)rate;
+	if ((reg & RV8803_CLK_FREQUENCY_MASK) == (u_rate << RV8803_CLK_FREQUENCY_SHIFT)) {
+		return -EALREADY;
+	}
+
 	reg &= ~RV8803_CLK_FREQUENCY_MASK;
 	switch (u_rate) {
 	case RV8803_CLK_FREQUENCY_32768_HZ:
