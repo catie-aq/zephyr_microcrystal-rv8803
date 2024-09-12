@@ -14,6 +14,16 @@
 LOG_MODULE_REGISTER(RV8803_CLK, CONFIG_RTC_LOG_LEVEL);
 
 #if CONFIG_CLOCK_CONTROL && CONFIG_RV8803_CLK_ENABLE
+static int rv8803_clk_on(const struct device *dev, clock_control_subsys_t sys)
+{
+	return -ENOTSUP;
+}
+
+static int rv8803_clk_off(const struct device *dev, clock_control_subsys_t sys)
+{
+	return -ENOTSUP;
+}
+
 static int rv8803_clk_set_rate(const struct device *dev, clock_control_subsys_t sys,
 			       clock_control_subsys_rate_t rate)
 {
@@ -99,6 +109,8 @@ static int rv8803_clk_init(const struct device *dev)
 
 /* RV8803 RTC driver API */
 static const struct clock_control_driver_api rv8803_clk_driver_api = {
+	.on = rv8803_clk_on,
+	.off = rv8803_clk_off,
 	.set_rate = rv8803_clk_set_rate,
 	.get_rate = rv8803_clk_get_rate,
 };
