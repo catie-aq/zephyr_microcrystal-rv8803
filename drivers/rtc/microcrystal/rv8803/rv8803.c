@@ -71,6 +71,13 @@ LOG_MODULE_REGISTER(RV8803, CONFIG_RTC_LOG_LEVEL);
 #define RV8803_WEEKDAY_ALARM         (0x00 << 6)
 #define RV8803_MONTHDAY_ALARM        (0x01 << 6)
 
+/* CLK OUT control*/
+#define RV8803_CLK_FREQUENCY_SHIFT    2
+#define RV8803_CLK_FREQUENCY_MASK     (0x03 << RV8803_CLK_FREQUENCY_SHIFT)
+#define RV8803_CLK_FREQUENCY_32768_HZ 0x00
+#define RV8803_CLK_FREQUENCY_1024_HZ  0x01
+#define RV8803_CLK_FREQUENCY_1_HZ     0x02
+
 #define DT_DRV_COMPAT microcrystal_rv8803_rtc
 #if DT_ANY_INST_HAS_PROP_STATUS_OKAY(irq_gpios)
 #if CONFIG_RV8803_RTC_ENABLE
@@ -529,11 +536,63 @@ static void rv8803_rtc_alarm_worker(struct k_work *p_work)
 static int rv8803_clk_set_rate(const struct device *dev, clock_control_subsys_t sys,
 			       clock_control_subsys_rate_t rate)
 {
+	ARG_UNUSED(sys);
+	const struct rv8803_clk_config *clk_config = dev->config;
+	const struct rv8803_config *config = clk_config->base_dev->config;
+	uint8_t reg;
+	int err;
+
+	err = i2c_reg_read_byte_dt(&config->i2c_bus, RV8803_REGISTER_EXTENSION, &reg);
+	if (err < 0) {
+		return err;
+	}
+
+	uintptr_t u_rate = (uintptr_t)rate;
+	reg &= ~RV8803_CLK_FREQUENCY_MASK;
+	switch (u_rate) {
+	case 32768:
+		reg |= (RV8803_CLK_FREQUENCY_32768_HZ << RV8803_CLK_FREQUENCY_SHIFT) &
+		       RV8803_CLK_FREQUENCY_MASK;
+		break;
+
+	case 1024:
+		reg |= (RV8803_CLK_FREQUENCY_1024_HZ << RV8803_CLK_FREQUENCY_SHIFT) &
+		       RV8803_CLK_FREQUENCY_MASK;
+		break;
+
+	case 1:
+		reg |= (RV8803_CLK_FREQUENCY_1_HZ << RV8803_CLK_FREQUENCY_SHIFT) &
+		       RV8803_CLK_FREQUENCY_MASK;
+		break;
+
+	default:
+		return -ENOTSUP;
+	}
+
+	err = i2c_reg_write_byte_dt(&config->i2c_bus, RV8803_REGISTER_EXTENSION, reg);
+	if (err < 0) {
+		return err;
+	}
+
 	return 0;
 }
 
 static int rv8803_clk_get_rate(const struct device *dev, clock_control_subsys_t sys, uint32_t *rate)
 {
+	ARG_UNUSED(sys);
+	const struct rv8803_clk_config *clk_config = dev->config;
+	const struct rv8803_config *config = clk_config->base_dev->config;
+	uint8_t reg;
+	int err;
+
+	err = i2c_reg_read_byte_dt(&config->i2c_bus, RV8803_REGISTER_EXTENSION, &reg);
+	if (err < 0) {
+		return err;
+	}
+
+	reg = reg & RV8803_CLK_FREQUENCY_MASK;
+	*rate = reg >> RV8803_CLK_FREQUENCY_SHIFT;
+
 	return 0;
 }
 
@@ -628,14 +687,11 @@ static const struct rtc_driver_api rv8803_rtc_driver_api = {
 static int rv8803_clk_init(const struct device *dev)
 {
 	const struct rv8803_clk_config *config = dev->config;
-	struct rv8803_clk_data *data = dev->data;
 
 	if (!device_is_ready(config->base_dev)) {
 		return -ENODEV;
 	}
 	LOG_INF("RV8803 CLK INIT");
-
-	data->enabled = false;
 
 	return 0;
 }
@@ -672,8 +728,6 @@ static const struct clock_control_driver_api rv8803_clk_driver_api = {
 #define RV8803_CLK_INIT(n)                                                                         \
 	static const struct rv8803_clk_config rv8803_clk_config_##n = {                            \
 		.base_dev = DEVICE_DT_GET(DT_PARENT(DT_INST(n, DT_DRV_COMPAT))),                   \
-		IF_ENABLED(RV8803_CLK_GPIO_IN_USE,                                                 \
-			   (.clk_gpio = GPIO_DT_SPEC_INST_GET_OR(n, clk_gpios, {0}))),             \
 	};                                                                                         \
 	static struct rv8803_clk_data rv8803_clk_data_##n;                                         \
 	DEVICE_DT_INST_DEFINE(n, rv8803_clk_init, NULL, &rv8803_clk_data_##n,                      \
