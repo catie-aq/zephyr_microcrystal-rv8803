@@ -557,13 +557,14 @@ static int rv8803_update_set_callback(const struct device *dev, rtc_update_callb
 		return -ENOTSUP;
 	}
 
+	if ((callback == NULL) && (user_data != NULL)) {
+		return -EINVAL;
+	}
+
 	struct rv8803_data *data = dev->data;
 	data->update_cb = callback;
 	data->update_cb_data = user_data;
 
-	if ((callback == NULL) && (user_data != NULL)) {
-		return -EINVAL;
-	}
 	int err = rv8803_setup_update_interrupt(dev, (callback == NULL) && (user_data == NULL));
 	if (err < 0) {
 		return err;
