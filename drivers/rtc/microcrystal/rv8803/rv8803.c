@@ -550,17 +550,17 @@ static int rv8803_clk_set_rate(const struct device *dev, clock_control_subsys_t 
 	uintptr_t u_rate = (uintptr_t)rate;
 	reg &= ~RV8803_CLK_FREQUENCY_MASK;
 	switch (u_rate) {
-	case 32768:
+	case RV8803_CLK_FREQUENCY_32768_HZ:
 		reg |= (RV8803_CLK_FREQUENCY_32768_HZ << RV8803_CLK_FREQUENCY_SHIFT) &
 		       RV8803_CLK_FREQUENCY_MASK;
 		break;
 
-	case 1024:
+	case RV8803_CLK_FREQUENCY_1024_HZ:
 		reg |= (RV8803_CLK_FREQUENCY_1024_HZ << RV8803_CLK_FREQUENCY_SHIFT) &
 		       RV8803_CLK_FREQUENCY_MASK;
 		break;
 
-	case 1:
+	case RV8803_CLK_FREQUENCY_1_HZ:
 		reg |= (RV8803_CLK_FREQUENCY_1_HZ << RV8803_CLK_FREQUENCY_SHIFT) &
 		       RV8803_CLK_FREQUENCY_MASK;
 		break;

@@ -11,8 +11,11 @@
 #include <time.h>
 #include <string.h>
 
-#define RTC_TEST_GET_SET_TIME (1767225595UL) // Wed Dec 31 2025 23:59:55 GMT+0000
-#define TIME_SIZE             64
+#define RTC_TEST_GET_SET_TIME         (1767225595UL) // Wed Dec 31 2025 23:59:55 GMT+0000
+#define TIME_SIZE                     64
+#define RV8803_CLK_FREQUENCY_32768_HZ 0x00
+#define RV8803_CLK_FREQUENCY_1024_HZ  0x01
+#define RV8803_CLK_FREQUENCY_1_HZ     0x02
 
 #define RV8803_NODE     DT_NODELABEL(rv88030)
 #define RV8803_RTC_NODE DT_CHILD(RV8803_NODE, rv8803_rtc)
@@ -27,12 +30,14 @@ void alarm_callback(const struct device *dev, uint16_t id, void *user_data)
 {
 	printk("RTC Alarm detected[%d]!!\n", freq_32k);
 	if (freq_32k) {
-		if (clock_control_set_rate(clk_dev, NULL, (void *)1024) != 0) {
+		if (clock_control_set_rate(clk_dev, NULL, (void *)RV8803_CLK_FREQUENCY_1024_HZ) !=
+		    0) {
 			printk("Failed to set clock rate\n");
 		}
 		freq_32k = !freq_32k;
 	} else {
-		if (clock_control_set_rate(clk_dev, NULL, (void *)32768) != 0) {
+		if (clock_control_set_rate(clk_dev, NULL, (void *)RV8803_CLK_FREQUENCY_32768_HZ) !=
+		    0) {
 			printk("Failed to set clock rate\n");
 		}
 		freq_32k = !freq_32k;
