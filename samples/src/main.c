@@ -6,6 +6,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/rtc.h>
+#include <zephyr/drivers/clock_control.h>
 
 #include <time.h>
 #include <string.h>
@@ -20,9 +21,22 @@
 static const struct device *rtc_dev = DEVICE_DT_GET(RV8803_RTC_NODE);
 static const struct device *clk_dev = DEVICE_DT_GET(RV8803_CLK_NODE);
 
+static bool freq_32k = true;
+
 void alarm_callback(const struct device *dev, uint16_t id, void *user_data)
 {
-	printk("RTC Alarm detected!!\n");
+	printk("RTC Alarm detected[%d]!!\n", freq_32k);
+	if (freq_32k) {
+		if (clock_control_set_rate(clk_dev, NULL, (void *)1024) != 0) {
+			printk("Failed to set clock rate\n");
+		}
+		freq_32k = !freq_32k;
+	} else {
+		if (clock_control_set_rate(clk_dev, NULL, (void *)32768) != 0) {
+			printk("Failed to set clock rate\n");
+		}
+		freq_32k = !freq_32k;
+	}
 }
 
 int main(void)
@@ -35,6 +49,21 @@ int main(void)
 		return 1;
 	}
 	printk("RTC device is ready\n");
+	if (!device_is_ready(clk_dev)) {
+		printk("Device is not ready\n");
+		return 1;
+	}
+	printk("CLK device is ready\n");
+
+	if (clock_control_set_rate(clk_dev, NULL, (void *)32768) != 0) {
+		printk("Failed to set clock rate\n");
+	}
+
+	uint32_t rate;
+	if (clock_control_get_rate(clk_dev, NULL, &rate) != 0) {
+		printk("Failed to set clock rate\n");
+	}
+	printk("Clock rate[%d]\n", rate);
 
 	time_t timer_set = RTC_TEST_GET_SET_TIME;
 	gmtime_r(&timer_set, (struct tm *)(&datetime_set));
