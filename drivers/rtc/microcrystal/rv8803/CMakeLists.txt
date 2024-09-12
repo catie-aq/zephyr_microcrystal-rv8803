@@ -4,3 +4,5 @@
 zephyr_library()
 
 zephyr_library_sources(rv8803.c)
+zephyr_library_sources(rv8803_rtc.c)
+zephyr_library_sources(rv8803_clk.c)
