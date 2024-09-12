@@ -28,19 +28,20 @@ static bool freq_32k = true;
 
 void alarm_callback(const struct device *dev, uint16_t id, void *user_data)
 {
-	printk("RTC Alarm detected[%d]!!\n", freq_32k);
 	if (freq_32k) {
+		printk("RTC Alarm detected: set rate[1024 Hz]!!\n");
 		if (clock_control_set_rate(clk_dev, NULL, (void *)RV8803_CLK_FREQUENCY_1024_HZ) !=
 		    0) {
 			printk("Failed to set clock rate\n");
 		}
-		freq_32k = !freq_32k;
+		freq_32k = false;
 	} else {
+		printk("RTC Alarm detected: set rate[32768 Hz]!!\n");
 		if (clock_control_set_rate(clk_dev, NULL, (void *)RV8803_CLK_FREQUENCY_32768_HZ) !=
 		    0) {
 			printk("Failed to set clock rate\n");
 		}
-		freq_32k = !freq_32k;
+		freq_32k = true;
 	}
 }
 
@@ -60,13 +61,16 @@ int main(void)
 	}
 	printk("CLK device is ready\n");
 
-	if (clock_control_set_rate(clk_dev, NULL, (void *)32768) != 0) {
-		printk("Failed to set clock rate\n");
+	int err = clock_control_set_rate(clk_dev, NULL, (void *)RV8803_CLK_FREQUENCY_32768_HZ);
+	if (err == -EALREADY) {
+		printk("Clock rate already set\n");
+	} else if (err != 0) {
+		printk("Failed to set clock rate[%d]\n", err);
 	}
 
 	uint32_t rate;
 	if (clock_control_get_rate(clk_dev, NULL, &rate) != 0) {
-		printk("Failed to set clock rate\n");
+		printk("Failed to get clock rate\n");
 	}
 	printk("Clock rate[%d]\n", rate);
 
