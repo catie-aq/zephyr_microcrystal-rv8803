@@ -24,5 +24,5 @@ if RV8803
     default n
     depends on RV8803
     help
-      Enable Clock OUT module.
+      Enable Clock Control Interface.
 endif # RV8803
