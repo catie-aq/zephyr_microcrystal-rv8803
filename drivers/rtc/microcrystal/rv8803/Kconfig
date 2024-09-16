@@ -20,7 +20,7 @@ if RV8803
       Enable RTC module.
 
   config RV8803_CLK_ENABLE
-    bool "RV8803 CLK OUT ENABLE"
+    bool "Enable Clock Control Interface"
     default n
     depends on RV8803
     help
