@@ -17,7 +17,7 @@ if RV8803
     default y
     depends on RV8803
     help
-      Enable RTC module.
+      Enable real-time clock interface.
 
   config RV8803_CLK_ENABLE
     bool "Enable Clock Control Interface"
