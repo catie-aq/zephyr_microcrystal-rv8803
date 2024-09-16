@@ -9,4 +9,4 @@ Implemented feature:
 - [X] Alarm Interface
 - [ ] Update Interface
 - [ ] Low battery interrupt
-- [X] CLK out configuration
+- [X] Clock Control Interface
