@@ -5,7 +5,7 @@ description: Micro Crystal AG RV-8803.
 
 compatible: "microcrystal,rv8803"
 
-#on-bus: i2c
+on-bus: i2c
 
 include:
   - name: i2c-device.yaml
