@@ -422,7 +422,7 @@ static int rv8803_setup_update_interrupt(const struct device *dev, bool disable)
 	const struct rv8803_rtc_config *rtc_config = dev->config;
 	const struct rv8803_config *config = rtc_config->base_dev->config;
 	int err;
-	
+
 	/* UIE and UF to 0 : stop interrupt */
 	err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_CONTROL,
 				     RV8803_CONTROL_MASK_UPDATE, RV8803_DISABLE_UPDATE);
