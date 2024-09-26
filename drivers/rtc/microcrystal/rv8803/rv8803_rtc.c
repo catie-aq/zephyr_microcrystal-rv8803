@@ -132,8 +132,9 @@ static void rv8803_rtc_gpio_callback_handler(const struct device *p_port,
 
 static void rv8803_rtc_gpio_worker(struct k_work *p_work)
 {
-	struct rv8803_data *data = CONTAINER_OF(p_work, struct rv8803_data, gpio_work);
-	const struct rv8803_config *config = data->dev->config;
+	struct rv8803_rtc_data *data = CONTAINER_OF(p_work, struct rv8803_rtc_data, gpio_work);
+	const struct rv8803_rtc_config *rtc_config = data->dev->config;
+	const struct rv8803_config *config = rtc_config->base_dev->config;
 	uint8_t reg;
 	int err;
 
@@ -413,37 +414,70 @@ static int rv8803_rtc_alarm_set_callback(const struct device *dev, uint16_t id,
 
 	return 0;
 }
+#endif /* CONFIG_RTC_ALARM */
 
-static void rv8803_rtc_alarm_worker(struct k_work *p_work)
+#if RV8803_IRQ_GPIO_USE_UPDATE
+static int rv8803_setup_update_interrupt(const struct device *dev, bool disable)
 {
-	struct rv8803_rtc_data *data = CONTAINER_OF(p_work, struct rv8803_rtc_data, alarm_work);
-	const struct rv8803_rtc_config *rtc_config = data->dev->config;
+	const struct rv8803_rtc_config *rtc_config = dev->config;
 	const struct rv8803_config *config = rtc_config->base_dev->config;
 	int err;
-
-	LOG_DBG("Process Alarm worker from interrupt");
-
-	if (data->alarm_cb != NULL) {
-		uint8_t reg;
-
-		err = i2c_reg_read_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG, &reg);
-		if (err < 0) {
-			LOG_ERR("Alarm worker I2C read FLAGS error");
-		}
-
-		if (reg & RV8803_FLAG_MASK_ALARM) {
-			LOG_DBG("Calling Alarm callback");
-			data->alarm_cb(data->dev, 0, data->alarm_cb_data);
-
-			err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG,
-						     RV8803_FLAG_MASK_ALARM, RV8803_DISABLE_ALARM);
-			if (err < 0) {
-				LOG_ERR("Alarm worker I2C update FLAG error");
-			}
-		}
+	
+	/* UIE and UF to 0 : stop interrupt */
+	err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_CONTROL,
+				     RV8803_CONTROL_MASK_UPDATE, RV8803_DISABLE_UPDATE);
+	if (err < 0) {
+		return err;
 	}
+	err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG,
+				     RV8803_FLAG_MASK_UPDATE, RV8803_DISABLE_UPDATE);
+	if (err < 0) {
+		return err;
+	}
+
+	if (disable) {
+		return 0;
+	}
+
+	/* Choose USEL value */
+	err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_EXTENSION,
+				     RV8803_EXTENSION_MASK_UPDATE, RV8803_DISABLE_UPDATE);
+	if (err < 0) {
+		return err;
+	}
+
+	/* UIE to 1 : start interrupt */
+	err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_CONTROL,
+				     RV8803_CONTROL_MASK_UPDATE, RV8803_ENABLE_UPDATE);
+	if (err < 0) {
+		return err;
+	}
+
+	return 0;
 }
-#endif /* CONFIG_RTC_ALARM */
+
+static int rv8803_update_set_callback(const struct device *dev, rtc_update_callback callback,
+				      void *user_data)
+{
+	const struct rv8803_rtc_config *rtc_config = dev->config;
+	if (rtc_config->irq_gpio.port == NULL) {
+		return -ENOTSUP;
+	}
+
+	struct rv8803_rtc_data *data = dev->data;
+	data->update_cb = callback;
+	data->update_cb_data = user_data;
+
+	if ((callback == NULL) && (user_data != NULL)) {
+		return -EINVAL;
+	}
+	int err = rv8803_setup_update_interrupt(dev, (callback == NULL) && (user_data == NULL));
+	if (err < 0) {
+		return err;
+	}
+
+	return 0;
+}
 #endif /* CONFIG_RTC */
 
 #if CONFIG_RTC && CONFIG_RV8803_RTC_ENABLE
