@@ -5,6 +5,7 @@ This sample application provides an example usage of the RTC RV8803 from Microcr
 - It sets the RTC time to the `Wed Dec 31 2025 23:59:55 GMT+0000`
 - It sets an alarm to send an interrupt each time the RTC time reaches the minute `01` (i.e. each hour at minute `01`).
 - Use the alarm callback to change the `clock_OUT` rate between `32.768 kHz` and `1024 Hz`.
+- Use the update callback to print a message.
 - It gets the RTC time and prints it each second.
 
 > [!NOTE]
