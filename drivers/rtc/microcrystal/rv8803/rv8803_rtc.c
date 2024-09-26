@@ -415,6 +415,7 @@ static int rv8803_rtc_alarm_set_callback(const struct device *dev, uint16_t id,
 	return 0;
 }
 #endif /* CONFIG_RTC_ALARM */
+#endif
 
 #if RV8803_IRQ_GPIO_USE_UPDATE
 static int rv8803_setup_update_interrupt(const struct device *dev, bool disable)
