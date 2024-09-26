@@ -17,6 +17,7 @@ This sample application provides an example usage of the RTC RV8803 from Microcr
 - Available IRQ GPIO for Alarm and Update interrupts.
 - `CONFIG_RTC=y` and `CONFIG_RV8803_RTC_ENABLE=y` in prj.conf to use RTC API.
 - `CONFIG_RTC_ALARM=y` in prj.conf to use RTC arlams.
+- `CONFIG_RTC_UPDATE=y` in prj.conf to use RTC update.
 - `CONFIG_CLOCK_CONTROL=y` and `CONFIG_RV8803_CLK_ENABLE=y` in prj.conf to use CLK API.
 
 # References
@@ -44,32 +45,53 @@ RTC get time succeed
 Setter[2] datetime [0|0 0:1]
 Getter[2] datetime [0|0 0:1]
 RTC_TIME[0] [Wed Dec 31 23:59:56 2025]
+RTC Update detected!!
 RTC_TIME[0] [Wed Dec 31 23:59:57 2025]
+RTC Update detected!!
 RTC_TIME[0] [Wed Dec 31 23:59:58 2025]
+RTC Update detected!!
 RTC_TIME[0] [Wed Dec 31 23:59:59 2025]
+RTC Update detected!!
 RTC_TIME[0] [Thu Jan  1 00:00:00 2026]
+RTC Update detected!!
 RTC_TIME[0] [Thu Jan  1 00:00:01 2026]
+RTC Update detected!!
 RTC_TIME[0] [Thu Jan  1 00:00:02 2026]
+RTC Update detected!!
+RTC_TIME[0] [Thu Jan  1 00:00:03 2026]
+RTC Update detected!!
 
 ...
 
 RTC_TIME[0] [Thu Jan  1 00:00:58 2026]
+RTC Update detected!!
 RTC_TIME[0] [Thu Jan  1 00:00:59 2026]
+RTC Update detected!!
 RTC_TIME[0] [Thu Jan  1 00:01:00 2026]
+RTC Update detected!!
 RTC Alarm detected: set rate[1024 Hz]!!
 RTC_TIME[0] [Thu Jan  1 00:01:01 2026]
+RTC Update detected!!
 RTC_TIME[0] [Thu Jan  1 00:01:02 2026]
+RTC Update detected!!
 RTC_TIME[0] [Thu Jan  1 00:01:03 2026]
+RTC Update detected!!
 
 ...
 
 RTC_TIME[0] [Thu Jan  1 01:00:58 2026]
+RTC Update detected!!
 RTC_TIME[0] [Thu Jan  1 01:00:59 2026]
+RTC Update detected!!
 RTC_TIME[0] [Thu Jan  1 01:01:00 2026]
+RTC Update detected!!
 RTC Alarm detected: set rate[32768 Hz]!!
 RTC_TIME[0] [Thu Jan  1 01:01:01 2026]
+RTC Update detected!!
 RTC_TIME[0] [Thu Jan  1 01:01:02 2026]
+RTC Update detected!!
 RTC_TIME[0] [Thu Jan  1 01:01:03 2026]
+RTC Update detected!!
 
 <repeats endlessly>
 ```
