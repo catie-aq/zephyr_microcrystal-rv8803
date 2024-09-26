@@ -20,7 +20,7 @@ LOG_MODULE_REGISTER(RV8803_RTC, CONFIG_RTC_LOG_LEVEL);
 /* API */
 static int rv8803_rtc_set_time(const struct device *dev, const struct rtc_time *timeptr)
 {
-	// Valid date are between 2000 and 2099
+	/* Valid date are between 2000 and 2099 */
 	if ((timeptr == NULL) || (timeptr->tm_year < RV8803_CORRECT_YEAR_LEAP_MIN) ||
 	    (timeptr->tm_year > RV8803_CORRECT_YEAR_LEAP_MAX)) {
 		LOG_ERR("invalid time");
@@ -31,7 +31,7 @@ static int rv8803_rtc_set_time(const struct device *dev, const struct rtc_time *
 		timeptr->tm_year, timeptr->tm_mon, timeptr->tm_mday, timeptr->tm_wday,
 		timeptr->tm_hour, timeptr->tm_min, timeptr->tm_sec);
 
-	// Init variables for i2c communication
+	/* Init variables for i2c communication */
 	const struct rv8803_rtc_config *rtc_config = dev->config;
 	const struct rv8803_config *config = rtc_config->base_dev->config;
 	uint8_t regs[7];
@@ -46,7 +46,7 @@ static int rv8803_rtc_set_time(const struct device *dev, const struct rtc_time *
 	regs[5] = bin2bcd(timeptr->tm_mon + RV8803_TM_MONTH) & RV8803_MONTH_BITS;
 	regs[6] = bin2bcd(timeptr->tm_year - RV8803_CORRECT_YEAR_LEAP_MIN) & RV8803_YEAR_BITS;
 
-	// Stopping time update clock
+	/* Stopping time update clock */
 	err = i2c_burst_read_dt(&config->i2c_bus, RV8803_REGISTER_CONTROL, control_reg,
 				sizeof(control_reg));
 	if (err < 0) {
@@ -59,10 +59,10 @@ static int rv8803_rtc_set_time(const struct device *dev, const struct rtc_time *
 		return err;
 	}
 
-	// Write new time to RTC register
+	/* Write new time to RTC register */
 	i2c_burst_write_dt(&config->i2c_bus, RV8803_REGISTER_SECONDS, regs, sizeof(regs));
 
-	// Restart time update clock
+	/* Restart time update clock */
 	control_reg[0] &= ~RV8803_RESET_BIT;
 	return i2c_burst_write_dt(&config->i2c_bus, RV8803_REGISTER_CONTROL, control_reg,
 				  sizeof(control_reg));
@@ -74,7 +74,7 @@ static int rv8803_rtc_get_time(const struct device *dev, struct rtc_time *timept
 		return -EINVAL;
 	}
 
-	// Init variables for i2c communication
+	/* Init variables for i2c communication */
 	const struct rv8803_rtc_config *rtc_config = dev->config;
 	const struct rv8803_config *config = rtc_config->base_dev->config;
 	uint8_t regs1[7];
@@ -87,7 +87,7 @@ static int rv8803_rtc_get_time(const struct device *dev, struct rtc_time *timept
 		return err;
 	}
 
-	// Check to confirm correct time
+	/* Check to confirm correct time */
 	if ((regs1[0] & RV8803_SECONDS_BITS) == bin2bcd(59)) {
 		err = i2c_burst_read_dt(&config->i2c_bus, RV8803_REGISTER_SECONDS, regs2,
 					sizeof(regs2));
@@ -107,7 +107,7 @@ static int rv8803_rtc_get_time(const struct device *dev, struct rtc_time *timept
 	timeptr->tm_mon = bcd2bin(correct[5] & RV8803_MONTH_BITS) - RV8803_TM_MONTH;
 	timeptr->tm_year = bcd2bin(correct[6] & RV8803_YEAR_BITS) + RV8803_CORRECT_YEAR_LEAP_MIN;
 
-	// Unused
+	/* Unused */
 	timeptr->tm_nsec = 0;
 	timeptr->tm_isdst = -1;
 	timeptr->tm_yday = -1;
@@ -127,8 +127,52 @@ static void rv8803_rtc_gpio_callback_handler(const struct device *p_port,
 
 	struct rv8803_rtc_data *data = CONTAINER_OF(p_cb, struct rv8803_rtc_data, gpio_cb);
 
+	k_work_submit(&data->gpio_work); /* Using work queue to exit isr context */
+}
+
+static void rv8803_rtc_gpio_worker(struct k_work *p_work)
+{
+	struct rv8803_data *data = CONTAINER_OF(p_work, struct rv8803_data, gpio_work);
+	const struct rv8803_config *config = data->dev->config;
+	uint8_t reg;
+	int err;
+
+	LOG_DBG("Process Alarm worker from interrupt");
+
+	err = i2c_reg_read_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG, &reg);
+	if (err < 0) {
+		LOG_ERR("Alarm worker I2C read FLAGS error");
+	}
+
 #if CONFIG_RTC_ALARM
-	k_work_submit(&data->alarm_work); // Using work queue to exit isr context
+	if (reg & RV8803_FLAG_MASK_ALARM) {
+		if (data->alarm_cb != NULL) {
+			LOG_DBG("Calling Alarm callback");
+			data->alarm_cb(data->dev, 0, data->alarm_cb_data);
+
+			err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG,
+						     RV8803_FLAG_MASK_ALARM, RV8803_DISABLE_ALARM);
+			if (err < 0) {
+				LOG_ERR("GPIO worker I2C update ALARM FLAG error");
+			}
+		}
+	}
+#endif
+
+#if CONFIG_RTC_UPDATE
+	if (reg & RV8803_FLAG_MASK_UPDATE) {
+		if (data->update_cb != NULL) {
+			LOG_DBG("Calling Update callback");
+			data->update_cb(data->dev, data->update_cb_data);
+
+			err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG,
+						     RV8803_FLAG_MASK_UPDATE,
+						     RV8803_DISABLE_UPDATE);
+			if (err < 0) {
+				LOG_ERR("GPIO worker I2C update UPDATE FLAG error");
+			}
+		}
+	}
 #endif
 }
 #endif
@@ -198,7 +242,7 @@ static int rv8803_rtc_alarm_set_time(const struct device *dev, uint16_t id, uint
 		return -EINVAL;
 	}
 
-	// Mask = 0 : Remove alarm interrupt
+	/* Mask = 0 : Remove alarm interrupt */
 	if (mask == 0) {
 		err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_CONTROL,
 					     RV8803_CONTROL_MASK_ALARM, RV8803_DISABLE_ALARM);
@@ -214,7 +258,7 @@ static int rv8803_rtc_alarm_set_time(const struct device *dev, uint16_t id, uint
 		return 0;
 	}
 
-	// AIE and AF to 0 -> stop interrupt and clear interrupt flags
+	/* AIE and AF to 0 -> stop interrupt and clear interrupt flags */
 	err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_CONTROL,
 				     RV8803_CONTROL_MASK_ALARM, RV8803_DISABLE_ALARM);
 	if (err < 0) {
@@ -226,7 +270,7 @@ static int rv8803_rtc_alarm_set_time(const struct device *dev, uint16_t id, uint
 		return err;
 	}
 
-	// Set WADA to 0 or 1
+	/* Set WADA to 0 or 1 */
 	uint8_t wada = RV8803_WEEKDAY_ALARM;
 	if (mask && RTC_ALARM_TIME_MASK_MONTHDAY) {
 		wada = RV8803_MONTHDAY_ALARM;
@@ -237,7 +281,7 @@ static int rv8803_rtc_alarm_set_time(const struct device *dev, uint16_t id, uint
 		return err;
 	}
 
-	// Set desired time and alarm
+	/* Set desired time and alarm */
 	uint8_t regs[3];
 	if (mask & RTC_ALARM_TIME_MASK_MINUTE) {
 		regs[0] = RV8803_ALARM_ENABLE_MINUTES;
@@ -269,7 +313,7 @@ static int rv8803_rtc_alarm_set_time(const struct device *dev, uint16_t id, uint
 		return err;
 	}
 
-	// AIE 1 -> activate interrupt
+	/* AIE 1 -> activate interrupt */
 	err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_CONTROL,
 				     RV8803_CONTROL_MASK_ALARM, RV8803_ENABLE_ALARM);
 	if (err < 0) {
@@ -399,8 +443,8 @@ static void rv8803_rtc_alarm_worker(struct k_work *p_work)
 		}
 	}
 }
-#endif // CONFIG_RTC_ALARM
-#endif // CONFIG_RTC
+#endif /* CONFIG_RTC_ALARM */
+#endif /* CONFIG_RTC */
 
 #if CONFIG_RTC && CONFIG_RV8803_RTC_ENABLE
 /* RV8803 RTC init */
@@ -443,15 +487,21 @@ static int rv8803_rtc_init(const struct device *dev)
 		LOG_ERR("Failed to add GPIO callback!!");
 		return err;
 	}
+#endif
 
+#if DT_ANY_INST_HAS_PROP_STATUS_OKAY(irq_gpios)
 	data->dev = dev;
+	data->gpio_work.handler = rv8803_rtc_gpio_worker;
 #endif
 
 #if RV8803_IRQ_GPIO_USE_ALARM
 	LOG_INF("RTC ALARM INIT");
 	data->alarm_cb = NULL;
 	data->alarm_cb_data = NULL;
-	data->alarm_work.handler = rv8803_rtc_alarm_worker;
+#endif
+#if RV8803_IRQ_GPIO_USE_UPDATE
+	data->update_cb = NULL;
+	data->update_cb_data = NULL;
 #endif
 
 	return 0;
@@ -467,6 +517,9 @@ static const struct rtc_driver_api rv8803_rtc_driver_api = {
 	.alarm_get_time = rv8803_rtc_alarm_get_time,
 	.alarm_is_pending = rv8803_rtc_alarm_is_pending,
 	.alarm_set_callback = rv8803_rtc_alarm_set_callback,
+#endif
+#if CONFIG_RTC_UPDATE
+	.update_set_callback = rv8803_update_set_callback,
 #endif
 };
 #endif
