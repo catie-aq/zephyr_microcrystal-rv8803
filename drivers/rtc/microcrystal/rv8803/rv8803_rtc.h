@@ -37,9 +37,8 @@
 #define RV8803_TM_MONTH 1
 
 /* Control MACRO */
-#define RV8803_PARTIAL_SECONDS_INCR                                                                \
-
 /* Check for partial incrementation when reads get 59 seconds */
+#define RV8803_PARTIAL_SECONDS_INCR  59
 #define RV8803_CORRECT_YEAR_LEAP_MIN (2000 - 1900) /* Diff between 2000 and tm base year 1900 */
 #define RV8803_CORRECT_YEAR_LEAP_MAX (2099 - 1900) /* Diff between 2099 and tm base year 1900 */
 #define RV8803_RESET_BIT             (0x01 << 0)
