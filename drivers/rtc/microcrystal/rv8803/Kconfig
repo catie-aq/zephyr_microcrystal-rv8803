@@ -18,11 +18,4 @@ if RV8803
     depends on RV8803
     help
       Enable real-time clock interface.
-
-  config RV8803_CLK_ENABLE
-    bool "Enable Clock Control Interface"
-    default n
-    depends on RV8803
-    help
-      Enable Clock Control Interface.
 endif # RV8803

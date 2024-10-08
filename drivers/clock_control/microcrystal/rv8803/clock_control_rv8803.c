@@ -9,7 +9,7 @@
 #include <zephyr/logging/log.h>
 
 #include "rv8803.h"
-#include "rv8803_clk.h"
+#include "clock_control_rv8803.h"
 
 LOG_MODULE_REGISTER(RV8803_CLK, CONFIG_RTC_LOG_LEVEL);
 

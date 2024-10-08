@@ -1,0 +1,13 @@
+# RV_8803_C7 driver configuration
+
+# Copyright (c) 2024 CATIE
+# SPDX-License-Identifier: Apache-2.0
+
+if RV8803
+  config RV8803_CLK_ENABLE
+    bool "Enable Clock Control Interface"
+    default n
+    depends on RV8803
+    help
+      Enable Clock Control Interface.
+endif # RV8803
