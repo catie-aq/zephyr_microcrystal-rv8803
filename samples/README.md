@@ -16,10 +16,10 @@ This sample application provides an example usage of the RTC RV8803 from Microcr
 - Power Supply: RTC components usually require an additional battery cell.
 - Board allowing I2C communication.
 - Available IRQ GPIO for Alarm and Update interrupts.
-- `CONFIG_RTC=y` and `CONFIG_RV8803_RTC_ENABLE=y` in prj.conf to use RTC API.
+- `CONFIG_RTC=y` in prj.conf to use RTC API.
 - `CONFIG_RTC_ALARM=y` in prj.conf to use RTC arlams.
 - `CONFIG_RTC_UPDATE=y` in prj.conf to use RTC update.
-- `CONFIG_CLOCK_CONTROL=y` and `CONFIG_RV8803_CLK_ENABLE=y` in prj.conf to use CLK API.
+- `CONFIG_CLOCK_CONTROL=y` in prj.conf to use CLK API.
 
 # References
 
