@@ -6,6 +6,14 @@
 
 #include <zephyr/dt-bindings/gpio/sixtron-header.h>
 
+/ {
+	aliases {
+		rv8803 = &rv88030;
+		rtc8803 = &rv88030_rtc;
+		clk8803 = &rv88030_clk;
+	};
+};
+
 &sixtron_i2c {
 	status = "okay";
 
@@ -13,12 +21,12 @@
 		compatible = "microcrystal,rv8803";
 		reg = <0x32>;
 
-		rv8803_rtc {
+		rv88030_rtc: rv8803-rtc {
 			compatible = "microcrystal,rv8803-rtc";
 			irq-gpios = <&sixtron_connector DIO2 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
 		};
 
-		rv8803_clk {
+		rv88030_clk: rv8803-clk {
 			compatible = "microcrystal,rv8803-clk";
 			#clock-cells = <0>;
 		};
