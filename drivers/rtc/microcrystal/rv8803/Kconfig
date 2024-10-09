@@ -16,13 +16,15 @@ if RV8803
     bool "Enable RTC Interface"
     default y
     depends on RV8803
+    depends on DT_HAS_MICROCRYSTAL_RV8803_RTC_ENABLED
     help
       Enable real-time clock interface.
 
   config RV8803_CLK_ENABLE
     bool "Enable Clock Control Interface"
-    default n
+    default y
     depends on RV8803
+    depends on DT_HAS_MICROCRYSTAL_RV8803_CLK_ENABLED
     help
       Enable Clock Control Interface.
 endif # RV8803
