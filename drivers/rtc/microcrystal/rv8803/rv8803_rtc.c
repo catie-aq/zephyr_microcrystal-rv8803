@@ -145,7 +145,7 @@ static void rv8803_rtc_gpio_worker(struct k_work *p_work)
 		LOG_ERR("Alarm worker I2C read FLAGS error");
 	}
 
-#if CONFIG_RTC_ALARM
+#if RV8803_IRQ_GPIO_USE_ALARM
 	if (reg & RV8803_FLAG_MASK_ALARM) {
 		if (data->alarm_cb != NULL) {
 			LOG_DBG("Calling Alarm callback");
@@ -160,7 +160,7 @@ static void rv8803_rtc_gpio_worker(struct k_work *p_work)
 	}
 #endif
 
-#if CONFIG_RTC_UPDATE
+#if RV8803_IRQ_GPIO_USE_UPDATE
 	if (reg & RV8803_FLAG_MASK_UPDATE) {
 		if (data->update_cb != NULL) {
 			LOG_DBG("Calling Update callback");
@@ -546,14 +546,14 @@ static int rv8803_rtc_init(const struct device *dev)
 static const struct rtc_driver_api rv8803_rtc_driver_api = {
 	.set_time = rv8803_rtc_set_time,
 	.get_time = rv8803_rtc_get_time,
-#if CONFIG_RTC_ALARM
+#if RV8803_IRQ_GPIO_USE_ALARM
 	.alarm_get_supported_fields = rv8803_rtc_alarm_get_supported_fields,
 	.alarm_set_time = rv8803_rtc_alarm_set_time,
 	.alarm_get_time = rv8803_rtc_alarm_get_time,
 	.alarm_is_pending = rv8803_rtc_alarm_is_pending,
 	.alarm_set_callback = rv8803_rtc_alarm_set_callback,
 #endif
-#if CONFIG_RTC_UPDATE
+#if RV8803_IRQ_GPIO_USE_UPDATE
 	.update_set_callback = rv8803_update_set_callback,
 #endif
 };
@@ -565,8 +565,7 @@ static const struct rtc_driver_api rv8803_rtc_driver_api = {
 	static const struct rv8803_rtc_config rv8803_rtc_config_##n = {                            \
 		.base_dev = DEVICE_DT_GET(DT_PARENT(DT_INST(n, DT_DRV_COMPAT))),                   \
 		IF_ENABLED(RV8803_IRQ_GPIO_IN_USE,                                                 \
-			   (.irq_gpio = GPIO_DT_SPEC_INST_GET_OR(n, irq_gpios, {0}))),             \
-	};                                                                                         \
+			   (.irq_gpio = GPIO_DT_SPEC_INST_GET_OR(n, irq_gpios, {0}), ))};          \
 	static struct rv8803_rtc_data rv8803_rtc_data_##n;                                         \
 	DEVICE_DT_INST_DEFINE(n, rv8803_rtc_init, NULL, &rv8803_rtc_data_##n,                      \
 			      &rv8803_rtc_config_##n, POST_KERNEL, CONFIG_RTC_INIT_PRIORITY,       \
