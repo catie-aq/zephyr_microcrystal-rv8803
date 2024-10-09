@@ -116,7 +116,7 @@ int main(void)
 
 	/* Update setup */
 	if (rtc_update_set_callback(rtc_dev, update_callback, NULL)) {
-		printk("Failed to set alarm callback using rtc_alarm_set_callback()\n");
+		printk("Failed to set update callback using rtc_update_set_callback()\n");
 	}
 
 	while (1) {
