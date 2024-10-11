@@ -27,6 +27,14 @@ if RV8803
     help
       Enable real-time clock interface.
 
+  config RV8803_COUNTER_ENABLE
+    bool "Enable COUNTER Interface"
+    default y
+    depends on RV8803
+    depends on DT_HAS_MICROCRYSTAL_RV8803_CNT_ENABLED
+    help
+      Enable counter interface.
+
   config RV8803_CLK_ENABLE
     bool "Enable Clock Control Interface"
     default y
