@@ -27,6 +27,13 @@
 #define RV8803_REGISTER_FLAG      0x0E
 #define RV8803_REGISTER_CONTROL   0x0F
 
+/* Low Voltage Flag */
+#define RV8803_FLAG_MASK_LOW_VOLTAGE_1 (0x01 << 0)
+#define RV8803_FLAG_MASK_LOW_VOLTAGE_2 (0x01 << 1)
+
+/* Timing constraint */
+#define RV8803_STARTUP_TIMING_MS 80
+
 /* Structs */
 /* RV8803 Base config */
 struct rv8803_config {
@@ -35,6 +42,10 @@ struct rv8803_config {
 
 /* RV8803 Base data */
 struct rv8803_data {
+#if CONFIG_RV8803_BATTERY_ENABLE
+	bool power_on_reset;
+	bool low_battery;
+#endif /* CONFIG_RV8803_BATTERY_ENABLE */
 };
 
 #endif /* ZEPHYR_DRIVERS_RTC_RV8803_H_ */
