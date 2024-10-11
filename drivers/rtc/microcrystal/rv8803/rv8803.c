@@ -15,11 +15,45 @@ LOG_MODULE_REGISTER(RV8803, CONFIG_RTC_LOG_LEVEL);
 static int rv8803_init(const struct device *dev)
 {
 	const struct rv8803_config *config = dev->config;
+	int err;
 
 	if (!i2c_is_ready_dt(&config->i2c_bus)) {
 		LOG_ERR("I2C bus not ready!!");
 		return -ENODEV;
 	}
+
+	k_sleep(K_MSEC(RV8803_STARTUP_TIMING_MS));
+
+#if CONFIG_RV8803_BATTERY_ENABLE
+	struct rv8803_data *data = dev->data;
+	uint8_t value;
+	err = i2c_reg_read_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG, &value);
+	if (err < 0) {
+		LOG_ERR("Failed to read FLAGS register!!");
+		return err;
+	}
+	LOG_DBG("FLAG REGISTER: [0x%02X]",
+		value & (RV8803_FLAG_MASK_LOW_VOLTAGE_1 | RV8803_FLAG_MASK_LOW_VOLTAGE_2));
+	data->power_on_reset = value & RV8803_FLAG_MASK_LOW_VOLTAGE_2;
+	data->low_battery = value & RV8803_FLAG_MASK_LOW_VOLTAGE_1;
+
+	if (data->power_on_reset) {
+		value &= ~RV8803_FLAG_MASK_LOW_VOLTAGE_2;
+		err = i2c_reg_write_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG, value);
+		if (err < 0) {
+			LOG_ERR("Failed to write FLAGS register!!");
+			return err;
+		}
+	} else if (data->low_battery) {
+		value &= ~RV8803_FLAG_MASK_LOW_VOLTAGE_1;
+		err = i2c_reg_write_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG, value);
+		if (err < 0) {
+			LOG_ERR("Failed to write FLAGS register!!");
+			return err;
+		}
+	}
+#endif /* CONFIG_RV8803_BATTERY_ENABLE */
+
 	LOG_INF("RV8803 INIT");
 
 	return 0;
