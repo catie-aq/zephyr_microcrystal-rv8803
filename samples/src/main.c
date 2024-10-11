@@ -64,6 +64,7 @@ int main(void)
 		printk("Device is not ready\n");
 		return 1;
 	}
+	printk("RV8803 device is ready\n");
 
 #if CONFIG_RV8803_BATTERY_ENABLE
 	struct rv8803_data *data = rv8803_dev->data;
