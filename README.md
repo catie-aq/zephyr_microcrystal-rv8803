@@ -8,5 +8,6 @@ Implemented feature:
 - [X] Basic time setter/getter
 - [X] Alarm Interface
 - [X] Update Interface
-- [ ] Low battery interrupt
+- [X] Low battery interrupt
 - [X] Clock Control Interface
+- [ ] Counter Interface
