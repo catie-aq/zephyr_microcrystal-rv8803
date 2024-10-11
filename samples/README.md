@@ -2,6 +2,7 @@
 
 This sample application provides an example usage of the RTC RV8803 from Microcrystal AG.
 
+- It print the battery flags to check for RTC battery status.
 - It sets the RTC time to the `Wed Dec 31 2025 23:59:55 GMT+0000`
 - It sets an alarm to send an interrupt each time the RTC time reaches the minute `01` (i.e. each hour at minute `01`).
 - Use the alarm callback to change the `clock_OUT` rate between `32.768 kHz` and `1024 Hz`.
@@ -38,6 +39,8 @@ west flash
 
 ```shell
 *** Booting Zephyr OS build v3.7.0 ***
+RV8803 device is ready
+RV8803: POR[0] LOW[0]
 RTC device is ready
 CLK device is ready
 Clock rate[0]
