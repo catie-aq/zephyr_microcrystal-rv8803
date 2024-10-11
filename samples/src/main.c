@@ -11,6 +11,10 @@
 #include <time.h>
 #include <string.h>
 
+#if CONFIG_RV8803_BATTERY_ENABLE
+#include "rv8803.h"
+#endif /* CONFIG_RV8803_BATTERY_ENABLE */
+
 #define RTC_TEST_GET_SET_TIME         (1767225595UL) // Wed Dec 31 2025 23:59:55 GMT+0000
 #define TIME_SIZE                     64
 #define RV8803_CLK_FREQUENCY_32768_HZ 0x00
@@ -21,6 +25,7 @@
 #define RV8803_RTC_NODE DT_CHILD(RV8803_NODE, rv8803_rtc)
 #define RV8803_CLK_NODE DT_CHILD(RV8803_NODE, rv8803_clk)
 
+static const struct device *rv8803_dev = DEVICE_DT_GET(RV8803_NODE);
 static const struct device *rtc_dev = DEVICE_DT_GET(RV8803_RTC_NODE);
 static const struct device *clk_dev = DEVICE_DT_GET(RV8803_CLK_NODE);
 
@@ -54,6 +59,16 @@ int main(void)
 {
 	struct rtc_time datetime_set, datetime_get, datetime_alarm;
 	char str[TIME_SIZE];
+
+	if (!device_is_ready(rv8803_dev)) {
+		printk("Device is not ready\n");
+		return 1;
+	}
+
+#if CONFIG_RV8803_BATTERY_ENABLE
+	struct rv8803_data *data = rv8803_dev->data;
+	printk("RV8803: POR[%d] LOW[%d]\n", data->power_on_reset, data->low_battery);
+#endif /* CONFIG_RV8803_BATTERY_ENABLE */
 
 	if (!device_is_ready(rtc_dev)) {
 		printk("Device is not ready\n");
