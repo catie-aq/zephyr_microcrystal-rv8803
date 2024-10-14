@@ -488,7 +488,6 @@ static int rv8803_rtc_init(const struct device *dev)
 	if (!device_is_ready(rtc_config->base_dev)) {
 		return -ENODEV;
 	}
-	LOG_INF("RV8803 RTC INIT");
 
 #if RV8803_IRQ_GPIO_IN_USE
 	struct rv8803_data *data = rtc_config->base_dev->data;
@@ -499,16 +498,19 @@ static int rv8803_rtc_init(const struct device *dev)
 	data->rtc_work.handler = rv8803_rtc_worker;
 
 #if RV8803_IRQ_GPIO_USE_ALARM
-	LOG_INF("RTC ALARM INIT");
+	LOG_INF("RV8803 RTC ALARM INIT");
 	rtc_data->alarm_cb = NULL;
 	rtc_data->alarm_cb_data = NULL;
 #endif /* RV8803_IRQ_GPIO_USE_ALARM */
 #if RV8803_IRQ_GPIO_USE_UPDATE
+	LOG_INF("RV8803 RTC UPDATE INIT");
 	rtc_data->update_cb = NULL;
 	rtc_data->update_cb_data = NULL;
 #endif /* RV8803_IRQ_GPIO_USE_UPDATE */
 
 #endif /* RV8803_IRQ_GPIO_IN_USE */
+
+	LOG_INF("RV8803 RTC INIT");
 
 	return 0;
 }
