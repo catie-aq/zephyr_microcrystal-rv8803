@@ -52,7 +52,7 @@
 #define RV8803_ENABLE_UPDATE        (0x01 << 5)
 #define RV8803_DISABLE_UPDATE       (0x00 << 5)
 
-#if DT_ANY_INST_HAS_PROP_STATUS_OKAY(irq_gpios)
+#if RV8803_HAS_IRQ
 #if CONFIG_RV8803_RTC_ENABLE
 #if defined(CONFIG_RTC_ALARM)
 #define RV8803_IRQ_GPIO_USE_ALARM 1
@@ -61,7 +61,7 @@
 #define RV8803_IRQ_GPIO_USE_UPDATE 1
 #endif /* CONFIG_RTC_UPDATE */
 #endif /* CONFIG_RV8803_RTC_ENABLE */
-#endif /* DT_ANY_INST_HAS_PROP_STATUS_OKAY */
+#endif /* RV8803_HAS_IRQ */
 
 #if defined(RV8803_IRQ_GPIO_USE_ALARM) || defined(RV8803_IRQ_GPIO_USE_UPDATE)
 #define RV8803_IRQ_GPIO_IN_USE 1
@@ -72,18 +72,12 @@
 /* RV8803 RTC config */
 struct rv8803_rtc_config {
 	const struct device *base_dev; /* Parent device reference */
-#if RV8803_IRQ_GPIO_IN_USE
-	const struct gpio_dt_spec irq_gpio;
-#endif
 };
 
 /* RV8803 RTC data */
 struct rv8803_rtc_data {
 #if RV8803_IRQ_GPIO_IN_USE
 	const struct device *dev;
-	struct gpio_callback gpio_cb;
-	struct k_work gpio_work;
-#endif
 
 #if RV8803_IRQ_GPIO_USE_ALARM
 	rtc_alarm_callback alarm_cb;
@@ -92,6 +86,8 @@ struct rv8803_rtc_data {
 #if RV8803_IRQ_GPIO_USE_UPDATE
 	rtc_update_callback update_cb;
 	void *update_cb_data;
+#endif
+
 #endif
 };
 #endif

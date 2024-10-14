@@ -9,3 +9,8 @@ on-bus: i2c
 
 include:
   - name: i2c-device.yaml
+
+properties:
+  irq-gpios:
+    type: phandle-array
+    description: Configures RV-8803 RTC interrupt signal.
