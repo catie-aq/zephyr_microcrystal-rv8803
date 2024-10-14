@@ -237,11 +237,13 @@ static int rv8803_rtc_alarm_set_time(const struct device *dev, uint16_t id, uint
 		err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_CONTROL,
 					     RV8803_CONTROL_MASK_ALARM, RV8803_DISABLE_ALARM);
 		if (err < 0) {
+			LOG_ERR("Update CONTROL: [%d]", err);
 			return err;
 		}
 		err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG,
 					     RV8803_FLAG_MASK_ALARM, RV8803_DISABLE_ALARM);
 		if (err < 0) {
+			LOG_ERR("Update FLAG: [%d]", err);
 			return err;
 		}
 
@@ -252,11 +254,13 @@ static int rv8803_rtc_alarm_set_time(const struct device *dev, uint16_t id, uint
 	err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_CONTROL,
 				     RV8803_CONTROL_MASK_ALARM, RV8803_DISABLE_ALARM);
 	if (err < 0) {
+		LOG_ERR("Update CONTROL: [%d]", err);
 		return err;
 	}
 	err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG, RV8803_FLAG_MASK_ALARM,
 				     RV8803_DISABLE_ALARM);
 	if (err < 0) {
+		LOG_ERR("Update FLAG: [%d]", err);
 		return err;
 	}
 
@@ -268,6 +272,7 @@ static int rv8803_rtc_alarm_set_time(const struct device *dev, uint16_t id, uint
 	err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_EXTENSION,
 				     RV8803_EXTENSION_MASK_WADA, wada);
 	if (err < 0) {
+		LOG_ERR("Update EXTENSION: [%d]", err);
 		return err;
 	}
 
@@ -300,6 +305,7 @@ static int rv8803_rtc_alarm_set_time(const struct device *dev, uint16_t id, uint
 	err = i2c_burst_write_dt(&config->i2c_bus, RV8803_REGISTER_ALARM_MINUTES, regs,
 				 sizeof(regs));
 	if (err < 0) {
+		LOG_ERR("Write ALARM: [%d]", err);
 		return err;
 	}
 
@@ -307,6 +313,7 @@ static int rv8803_rtc_alarm_set_time(const struct device *dev, uint16_t id, uint
 	err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_CONTROL,
 				     RV8803_CONTROL_MASK_ALARM, RV8803_ENABLE_ALARM);
 	if (err < 0) {
+		LOG_ERR("Update CONTROL: [%d]", err);
 		return err;
 	}
 
