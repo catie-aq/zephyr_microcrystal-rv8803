@@ -85,7 +85,7 @@ static int rv8803_init(const struct device *dev)
 	}
 	LOG_DBG("FLAG REGISTER: [0x%02X]",
 		value & (RV8803_FLAG_MASK_LOW_VOLTAGE_1 | RV8803_FLAG_MASK_LOW_VOLTAGE_2));
-	data->power_on_reset = value & RV8803_FLAG_MASK_LOW_VOLTAGE_2;
+	data->power_on_reset = (value & RV8803_FLAG_MASK_LOW_VOLTAGE_2) >> 1;
 	data->low_battery = value & RV8803_FLAG_MASK_LOW_VOLTAGE_1;
 
 	if (data->power_on_reset) {
