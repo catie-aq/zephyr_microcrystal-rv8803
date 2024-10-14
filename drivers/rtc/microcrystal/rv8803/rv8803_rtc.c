@@ -120,7 +120,7 @@ static int rv8803_rtc_get_time(const struct device *dev, struct rtc_time *timept
 #if RV8803_IRQ_GPIO_IN_USE
 static void rv8803_rtc_worker(struct k_work *p_work)
 {
-	struct rv8803_data *data = CONTAINER_OF(p_work, struct rv8803_data, rtc_work);
+	struct rv8803_irq *data = CONTAINER_OF(p_work, struct rv8803_irq, rtc_work);
 	const struct rv8803_rtc_config *rtc_config = data->rtc_dev->config;
 	const struct rv8803_rtc_data *rtc_data = data->rtc_dev->data;
 	const struct rv8803_config *config = rtc_config->base_dev->config;
@@ -136,9 +136,10 @@ static void rv8803_rtc_worker(struct k_work *p_work)
 
 #if RV8803_IRQ_GPIO_USE_ALARM
 	if (reg & RV8803_FLAG_MASK_ALARM) {
-		if (rtc_data->alarm_cb != NULL) {
+		if (rtc_data->rtc_alarm->alarm_cb != NULL) {
 			LOG_DBG("Calling Alarm callback");
-			rtc_data->alarm_cb(data->rtc_dev, 0, rtc_data->alarm_cb_data);
+			rtc_data->rtc_alarm->alarm_cb(data->rtc_dev, 0,
+						      rtc_data->rtc_alarm->alarm_cb_data);
 
 			err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG,
 						     RV8803_FLAG_MASK_ALARM, RV8803_DISABLE_ALARM);
@@ -151,9 +152,10 @@ static void rv8803_rtc_worker(struct k_work *p_work)
 
 #if RV8803_IRQ_GPIO_USE_UPDATE
 	if (reg & RV8803_FLAG_MASK_UPDATE) {
-		if (rtc_data->update_cb != NULL) {
+		if (rtc_data->rtc_update->update_cb != NULL) {
 			LOG_DBG("Calling Update callback");
-			rtc_data->update_cb(data->rtc_dev, rtc_data->update_cb_data);
+			rtc_data->rtc_update->update_cb(data->rtc_dev,
+							rtc_data->rtc_update->update_cb_data);
 
 			err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG,
 						     RV8803_FLAG_MASK_UPDATE,
@@ -401,13 +403,13 @@ static int rv8803_rtc_alarm_set_callback(const struct device *dev, uint16_t id,
 	ARG_UNUSED(id);
 	const struct rv8803_rtc_config *rtc_config = dev->config;
 	const struct rv8803_config *config = rtc_config->base_dev->config;
-	if (config->irq_gpio.port == NULL) {
+	if (config->gpio->irq_gpio.port == NULL) {
 		return -ENOTSUP;
 	}
 
 	struct rv8803_rtc_data *data = dev->data;
-	data->alarm_cb = callback;
-	data->alarm_cb_data = user_data;
+	data->rtc_alarm->alarm_cb = callback;
+	data->rtc_alarm->alarm_cb_data = user_data;
 
 	return 0;
 }
@@ -459,13 +461,13 @@ static int rv8803_update_set_callback(const struct device *dev, rtc_update_callb
 {
 	const struct rv8803_rtc_config *rtc_config = dev->config;
 	const struct rv8803_config *config = rtc_config->base_dev->config;
-	if (config->irq_gpio.port == NULL) {
+	if (config->gpio->irq_gpio.port == NULL) {
 		return -ENOTSUP;
 	}
 
 	struct rv8803_rtc_data *data = dev->data;
-	data->update_cb = callback;
-	data->update_cb_data = user_data;
+	data->rtc_update->update_cb = callback;
+	data->rtc_update->update_cb_data = user_data;
 
 	if ((callback == NULL) && (user_data != NULL)) {
 		return -EINVAL;
@@ -493,19 +495,19 @@ static int rv8803_rtc_init(const struct device *dev)
 	struct rv8803_data *data = rtc_config->base_dev->data;
 	struct rv8803_rtc_data *rtc_data = dev->data;
 
-	rtc_data->dev = dev;
-	data->rtc_dev = dev;
-	data->rtc_work.handler = rv8803_rtc_worker;
+	rtc_data->rtc_irq->dev = dev;
+	data->irq->rtc_dev = dev;
+	data->irq->rtc_work.handler = rv8803_rtc_worker;
 
 #if RV8803_IRQ_GPIO_USE_ALARM
 	LOG_INF("RV8803 RTC ALARM INIT");
-	rtc_data->alarm_cb = NULL;
-	rtc_data->alarm_cb_data = NULL;
+	rtc_data->rtc_alarm->alarm_cb = NULL;
+	rtc_data->rtc_alarm->alarm_cb_data = NULL;
 #endif /* RV8803_IRQ_GPIO_USE_ALARM */
 #if RV8803_IRQ_GPIO_USE_UPDATE
 	LOG_INF("RV8803 RTC UPDATE INIT");
-	rtc_data->update_cb = NULL;
-	rtc_data->update_cb_data = NULL;
+	rtc_data->rtc_update->update_cb = NULL;
+	rtc_data->rtc_update->update_cb_data = NULL;
 #endif /* RV8803_IRQ_GPIO_USE_UPDATE */
 
 #endif /* RV8803_IRQ_GPIO_IN_USE */
@@ -538,7 +540,16 @@ static const struct rtc_driver_api rv8803_rtc_driver_api = {
 	static const struct rv8803_rtc_config rv8803_rtc_config_##n = {                            \
 		.base_dev = DEVICE_DT_GET(DT_PARENT(DT_INST(n, DT_DRV_COMPAT))),                   \
 	};                                                                                         \
-	static struct rv8803_rtc_data rv8803_rtc_data_##n;                                         \
+	IF_ENABLED(RV8803_IRQ_GPIO_IN_USE, (static struct rv8803_rtc_irq rv8803_rtc_irq_##n;))     \
+	IF_ENABLED(RV8803_IRQ_GPIO_USE_ALARM,                                                      \
+		   (static struct rv8803_rtc_alarm rv8803_rtc_alarm_##n;))                         \
+	IF_ENABLED(RV8803_IRQ_GPIO_USE_UPDATE,                                                     \
+		   (static struct rv8803_rtc_update rv8803_rtc_update_##n;))                       \
+	static struct rv8803_rtc_data rv8803_rtc_data_##n = {                                      \
+		IF_ENABLED(RV8803_IRQ_GPIO_IN_USE, (.rtc_irq = &rv8803_rtc_irq_##n, )) IF_ENABLED( \
+			RV8803_IRQ_GPIO_USE_ALARM, (.rtc_alarm = &rv8803_rtc_alarm_##n, ))         \
+			IF_ENABLED(RV8803_IRQ_GPIO_USE_UPDATE,                                     \
+				   (.rtc_update = &rv8803_rtc_update_##n, ))};                     \
 	DEVICE_DT_INST_DEFINE(n, rv8803_rtc_init, NULL, &rv8803_rtc_data_##n,                      \
 			      &rv8803_rtc_config_##n, POST_KERNEL, CONFIG_RTC_INIT_PRIORITY,       \
 			      &rv8803_rtc_driver_api);

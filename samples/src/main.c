@@ -71,7 +71,7 @@ int main(void)
 
 #if CONFIG_RV8803_BATTERY_ENABLE
 	struct rv8803_data *data = rv8803_dev->data;
-	printk("RV8803: POR[%d] LOW[%d]\n", data->power_on_reset, data->low_battery);
+	printk("RV8803: POR[%d] LOW[%d]\n", data->bat->power_on_reset, data->bat->low_battery);
 #endif /* CONFIG_RV8803_BATTERY_ENABLE */
 
 	if (!device_is_ready(rtc_dev)) {

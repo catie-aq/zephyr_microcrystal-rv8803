@@ -54,16 +54,26 @@
 #endif
 
 /* Structs */
-/* RV8803 Base config */
-struct rv8803_config {
-	struct i2c_dt_spec i2c_bus;
+struct rv8803_config_irq {
 #if RV8803_HAS_IRQ
 	const struct gpio_dt_spec irq_gpio;
 #endif
 };
 
-/* RV8803 Base data */
-struct rv8803_data {
+/* RV8803 Base config */
+struct rv8803_config {
+	struct i2c_dt_spec i2c_bus;
+	struct rv8803_config_irq *gpio;
+};
+
+struct rv8803_battery {
+#if CONFIG_RV8803_BATTERY_ENABLE
+	bool power_on_reset;
+	bool low_battery;
+#endif /* CONFIG_RV8803_BATTERY_ENABLE */
+};
+
+struct rv8803_irq {
 #if RV8803_HAS_IRQ
 	const struct device *rtc_dev;
 	const struct device *cnt_dev;
@@ -71,10 +81,18 @@ struct rv8803_data {
 	struct k_work rtc_work;
 	struct k_work cnt_work;
 #endif
-#if CONFIG_RV8803_DETECT_BATTERY_STATE
-	bool power_on_reset;
-	bool low_battery;
-#endif /* CONFIG_RV8803_DETECT_BATTERY_STATE */
+};
+
+/* RV8803 Base data */
+struct rv8803_data {
+	struct rv8803_battery *bat;
+	struct rv8803_irq *irq;
+};
+
+/* RV8803 Base data */
+struct rv8803_data {
+	struct rv8803_battery *bat;
+	struct rv8803_irq *irq;
 };
 
 #endif /* ZEPHYR_DRIVERS_RTC_RV8803_H_ */
