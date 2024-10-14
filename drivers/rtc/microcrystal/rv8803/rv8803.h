@@ -71,7 +71,6 @@ struct rv8803_data {
 	struct k_work rtc_work;
 	struct k_work cnt_work;
 #endif
-
 #if CONFIG_RV8803_DETECT_BATTERY_STATE
 	bool power_on_reset;
 	bool low_battery;
