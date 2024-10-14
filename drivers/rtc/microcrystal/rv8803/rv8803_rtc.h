@@ -74,21 +74,31 @@ struct rv8803_rtc_config {
 	const struct device *base_dev; /* Parent device reference */
 };
 
-/* RV8803 RTC data */
-struct rv8803_rtc_data {
+struct rv8803_rtc_irq {
 #if RV8803_IRQ_GPIO_IN_USE
 	const struct device *dev;
+#endif /* RV8803_IRQ_GPIO_IN_USE */
+};
 
+struct rv8803_rtc_alarm {
 #if RV8803_IRQ_GPIO_USE_ALARM
 	rtc_alarm_callback alarm_cb;
 	void *alarm_cb_data;
-#endif
+#endif /* RV8803_IRQ_GPIO_USE_ALARM */
+};
+
+struct rv8803_rtc_update {
 #if RV8803_IRQ_GPIO_USE_UPDATE
 	rtc_update_callback update_cb;
 	void *update_cb_data;
-#endif
+#endif /* RV8803_IRQ_GPIO_USE_UPDATE */
+};
 
-#endif
+/* RV8803 RTC data */
+struct rv8803_rtc_data {
+	struct rv8803_rtc_irq *rtc_irq;
+	struct rv8803_rtc_alarm *rtc_alarm;
+	struct rv8803_rtc_update *rtc_update;
 };
 #endif
 
