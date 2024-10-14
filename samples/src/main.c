@@ -6,6 +6,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/rtc.h>
+#include <zephyr/drivers/counter.h>
 #include <zephyr/drivers/clock_control.h>
 
 #include <time.h>
@@ -23,10 +24,12 @@
 
 #define RV8803_NODE     DT_NODELABEL(rv88030)
 #define RV8803_RTC_NODE DT_CHILD(RV8803_NODE, rv8803_rtc)
+#define RV8803_CNT_NODE DT_CHILD(RV8803_NODE, rv8803_cnt)
 #define RV8803_CLK_NODE DT_CHILD(RV8803_NODE, rv8803_clk)
 
 static const struct device *rv8803_dev = DEVICE_DT_GET(RV8803_NODE);
 static const struct device *rtc_dev = DEVICE_DT_GET(RV8803_RTC_NODE);
+static const struct device *cnt_dev = DEVICE_DT_GET(RV8803_CNT_NODE);
 static const struct device *clk_dev = DEVICE_DT_GET(RV8803_CLK_NODE);
 
 static bool freq_32k = true;
@@ -76,6 +79,11 @@ int main(void)
 		return 1;
 	}
 	printk("RTC device is ready\n");
+	if (!device_is_ready(cnt_dev)) {
+		printk("Device is not ready\n");
+		return 1;
+	}
+	printk("CNT device is ready\n");
 	if (!device_is_ready(clk_dev)) {
 		printk("Device is not ready\n");
 		return 1;
