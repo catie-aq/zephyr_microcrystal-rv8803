@@ -73,7 +73,6 @@ static int rv8803_cnt_init(const struct device *dev)
 static const struct counter_driver_api rv8803_cnt_driver_api = {
 	.start = counter_rv8803_cnt_start,
 	.stop = counter_rv8803_cnt_stop,
-	.get_value = counter_rv8803_cnt_get_value,
 	.set_alarm = counter_rv8803_cnt_set_alarm,
 	.cancel_alarm = counter_rv8803_cnt_cancel_alarm,
 	.set_top_value = counter_rv8803_cnt_set_top_value,
