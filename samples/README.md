@@ -18,9 +18,11 @@ This sample application provides an example usage of the RTC RV8803 from Microcr
 - Board allowing I2C communication.
 - Available IRQ GPIO for Alarm and Update interrupts.
 - `CONFIG_RTC=y` in prj.conf to use RTC API.
+- Set `CONFIG_RV8803_RTC_ENABLE=n` in prj.conf to disable RTC regardless of `CONFIG_RTC`.
 - `CONFIG_RTC_ALARM=y` in prj.conf to use RTC arlams.
 - `CONFIG_RTC_UPDATE=y` in prj.conf to use RTC update.
 - `CONFIG_CLOCK_CONTROL=y` in prj.conf to use CLK API.
+- Set `CONFIG_RV8803_CLK_ENABLE=n` in prj.conf to disable CLK regardless of `CONFIG_CLOCK_CONTROL`.
 
 # References
 
