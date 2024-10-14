@@ -11,6 +11,24 @@
 
 LOG_MODULE_REGISTER(RV8803, CONFIG_RTC_LOG_LEVEL);
 
+#if defined(RV8803_HAS_IRQ)
+static void rv8803_gpio_callback_handler(const struct device *p_port, struct gpio_callback *p_cb,
+					 gpio_port_pins_t pins)
+{
+	ARG_UNUSED(p_port);
+	ARG_UNUSED(pins);
+
+	struct rv8803_data *data = CONTAINER_OF(p_cb, struct rv8803_data, gpio_cb);
+
+	if (data->rtc_work.handler != NULL) {
+		k_work_submit(&data->rtc_work); /* Using work queue to exit isr context */
+	}
+	if (data->cnt_work.handler != NULL) {
+		k_work_submit(&data->cnt_work); /* Using work queue to exit isr context */
+	}
+}
+#endif /* RV8803_HAS_IRQ */
+
 /* RV8803 base init */
 static int rv8803_init(const struct device *dev)
 {
@@ -23,8 +41,42 @@ static int rv8803_init(const struct device *dev)
 
 	k_sleep(K_MSEC(RV8803_STARTUP_TIMING_MS));
 
-#if CONFIG_RV8803_DETECT_BATTERY_STATE
+#if RV8803_HAS_IRQ || CONFIG_RV8803_DETECT_BATTERY_STATE
 	struct rv8803_data *data = dev->data;
+#endif
+
+#if RV8803_HAS_IRQ
+	if (!gpio_is_ready_dt(&config->irq_gpio)) {
+		LOG_ERR("GPIO not ready!!");
+		return -ENODEV;
+	}
+
+	LOG_INF("IRQ GPIO configure");
+	err = gpio_pin_configure_dt(&config->irq_gpio, GPIO_INPUT);
+	if (err < 0) {
+		LOG_ERR("Failed to configure GPIO!!");
+		return err;
+	}
+
+	err = gpio_pin_interrupt_configure_dt(&config->irq_gpio, GPIO_INT_EDGE_FALLING);
+	if (err < 0) {
+		LOG_ERR("Failed to configure interrupt!!");
+		return err;
+	}
+
+	gpio_init_callback(&data->gpio_cb, rv8803_gpio_callback_handler, BIT(config->irq_gpio.pin));
+
+	err = gpio_add_callback_dt(&config->irq_gpio, &data->gpio_cb);
+	if (err < 0) {
+		LOG_ERR("Failed to add GPIO callback!!");
+		return err;
+	}
+
+	data->rtc_work.handler = NULL;
+	data->cnt_work.handler = NULL;
+#endif /* RV8803_HAS_IRQ */
+
+#if CONFIG_RV8803_BATTERY_ENABLE
 	uint8_t value;
 	int err = i2c_reg_read_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG, &value);
 	if (err < 0) {
@@ -62,7 +114,8 @@ static int rv8803_init(const struct device *dev)
 #define RV8803_INIT(n)                                                                             \
 	static const struct rv8803_config rv8803_config_##n = {                                    \
 		.i2c_bus = I2C_DT_SPEC_INST_GET(n),                                                \
-	};                                                                                         \
+		IF_ENABLED(RV8803_HAS_IRQ,                                                         \
+			   (.irq_gpio = GPIO_DT_SPEC_INST_GET_OR(n, irq_gpios, {0}), ))};          \
 	static struct rv8803_data rv8803_data_##n;                                                 \
 	DEVICE_DT_INST_DEFINE(n, rv8803_init, NULL, &rv8803_data_##n, &rv8803_config_##n,          \
 			      POST_KERNEL, CONFIG_RTC_INIT_PRIORITY, NULL);

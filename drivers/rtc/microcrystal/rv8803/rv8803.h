@@ -7,6 +7,7 @@
 #define ZEPHYR_DRIVERS_RTC_RV8803_H_
 
 #include <zephyr/drivers/i2c.h>
+#include <zephyr/drivers/gpio.h>
 
 /* Calendar Registers */
 #define RV8803_REGISTER_SECONDS 0x00
@@ -38,10 +39,21 @@
 /* RV8803 Base config */
 struct rv8803_config {
 	struct i2c_dt_spec i2c_bus;
+#if RV8803_HAS_IRQ
+	const struct gpio_dt_spec irq_gpio;
+#endif
 };
 
 /* RV8803 Base data */
 struct rv8803_data {
+#if RV8803_HAS_IRQ
+	const struct device *rtc_dev;
+	const struct device *cnt_dev;
+	struct gpio_callback gpio_cb;
+	struct k_work rtc_work;
+	struct k_work cnt_work;
+#endif
+
 #if CONFIG_RV8803_DETECT_BATTERY_STATE
 	bool power_on_reset;
 	bool low_battery;
