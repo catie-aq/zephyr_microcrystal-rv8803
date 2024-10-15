@@ -53,6 +53,32 @@
 #define RV8803_HAS_IRQ 1
 #endif
 
+#if RV8803_HAS_IRQ
+#if CONFIG_RV8803_RTC_ENABLE
+#if defined(CONFIG_RTC_ALARM)
+#define RV8803_IRQ_GPIO_USE_ALARM 1
+#endif /* CONFIG_RTC_ALARM */
+#if defined(CONFIG_RTC_UPDATE)
+#define RV8803_IRQ_GPIO_USE_UPDATE 1
+#endif /* CONFIG_RTC_UPDATE */
+#endif /* CONFIG_RV8803_RTC_ENABLE */
+#if CONFIG_RV8803_COUNTER_ENABLE
+#if defined(CONFIG_COUNTER)
+#define RV8803_IRQ_GPIO_USE_COUNTER 1
+#endif /* CONFIG_RTC_ALARM */
+#endif /* RV8803_COUNTER_ENABLE */
+#endif /* RV8803_HAS_IRQ */
+
+#if defined(RV8803_IRQ_GPIO_USE_ALARM) || defined(RV8803_IRQ_GPIO_USE_UPDATE)
+#define RV8803_IRQ_RTC_IN_USE 1
+#endif
+#if defined(RV8803_IRQ_GPIO_USE_COUNTER)
+#define RV8803_IRQ_CNT_IN_USE 1
+#endif
+#if defined(RV8803_IRQ_RTC_IN_USE) || defined(RV8803_IRQ_CNT_IN_USE)
+#define RV8803_IRQ_GPIO_IN_USE 1
+#endif
+
 /* Structs */
 struct rv8803_config_irq {
 #if RV8803_HAS_IRQ
@@ -75,12 +101,16 @@ struct rv8803_battery {
 
 struct rv8803_irq {
 #if RV8803_HAS_IRQ
-	const struct device *rtc_dev;
-	const struct device *cnt_dev;
 	struct gpio_callback gpio_cb;
+#if RV8803_IRQ_RTC_IN_USE
+	const struct device *rtc_dev;
 	struct k_work rtc_work;
+#endif /* RV8803_IRQ_RTC_IN_USE */
+#if RV8803_IRQ_CNT_IN_USE
+	const struct device *cnt_dev;
 	struct k_work cnt_work;
-#endif
+#endif /* RV8803_IRQ_CNT_IN_USE */
+#endif /* RV8803_HAS_IRQ */
 };
 
 /* RV8803 Base data */

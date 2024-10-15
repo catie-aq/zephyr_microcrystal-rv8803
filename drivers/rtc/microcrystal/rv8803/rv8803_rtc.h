@@ -52,21 +52,6 @@
 #define RV8803_ENABLE_UPDATE        (0x01 << 5)
 #define RV8803_DISABLE_UPDATE       (0x00 << 5)
 
-#if RV8803_HAS_IRQ
-#if CONFIG_RV8803_RTC_ENABLE
-#if defined(CONFIG_RTC_ALARM)
-#define RV8803_IRQ_GPIO_USE_ALARM 1
-#endif /* CONFIG_RTC_ALARM */
-#if defined(CONFIG_RTC_UPDATE)
-#define RV8803_IRQ_GPIO_USE_UPDATE 1
-#endif /* CONFIG_RTC_UPDATE */
-#endif /* CONFIG_RV8803_RTC_ENABLE */
-#endif /* RV8803_HAS_IRQ */
-
-#if defined(RV8803_IRQ_GPIO_USE_ALARM) || defined(RV8803_IRQ_GPIO_USE_UPDATE)
-#define RV8803_IRQ_GPIO_IN_USE 1
-#endif
-
 /* Structs */
 #if CONFIG_RTC && CONFIG_RV8803_RTC_ENABLE
 /* RV8803 RTC config */
