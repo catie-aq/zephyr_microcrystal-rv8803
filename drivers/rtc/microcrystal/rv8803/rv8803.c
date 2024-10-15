@@ -20,12 +20,16 @@ static void rv8803_gpio_callback_handler(const struct device *p_port, struct gpi
 
 	struct rv8803_irq *data = CONTAINER_OF(p_cb, struct rv8803_irq, gpio_cb);
 
+#if defined(RV8803_IRQ_RTC_IN_USE)
 	if (data->rtc_work.handler != NULL) {
 		k_work_submit(&data->rtc_work); /* Using work queue to exit isr context */
 	}
+#endif /* RV8803_IRQ_RTC_IN_USE */
+#if defined(RV8803_IRQ_GPIO_USE_COUNTER)
 	if (data->cnt_work.handler != NULL) {
 		k_work_submit(&data->cnt_work); /* Using work queue to exit isr context */
 	}
+#endif /* RV8803_IRQ_GPIO_USE_COUNTER */
 }
 #endif /* RV8803_HAS_IRQ */
 
@@ -73,8 +77,12 @@ static int rv8803_init(const struct device *dev)
 		return err;
 	}
 
+#if defined(RV8803_IRQ_RTC_IN_USE)
 	data->irq->rtc_work.handler = NULL;
+#endif /* RV8803_IRQ_RTC_IN_USE */
+#if defined(RV8803_IRQ_GPIO_USE_COUNTER)
 	data->irq->cnt_work.handler = NULL;
+#endif /* RV8803_IRQ_GPIO_USE_COUNTER */
 #endif /* RV8803_HAS_IRQ */
 
 #if CONFIG_RV8803_BATTERY_ENABLE
