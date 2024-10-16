@@ -42,7 +42,8 @@ struct rv8803_cnt_config {
 
 /* RV8803 CLK data */
 struct rv8803_cnt_data {
-	struct counter_top_cfg *counter_cb;
+	counter_top_callback_t counter_cb;
+	void *user_data;
 };
 #endif
 #endif /* ZEPHYR_DRIVERS_RTC_RV8803_CNT_H_ */
