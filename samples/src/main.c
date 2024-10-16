@@ -58,9 +58,15 @@ void update_callback(const struct device *dev, void *user_data)
 	printk("RTC Update detected!!\n");
 }
 
+void period_callback(const struct device *dev, void *user_data)
+{
+	printk("CNT Period detected!!\n");
+}
+
 int main(void)
 {
 	struct rtc_time datetime_set, datetime_get, datetime_alarm;
+	struct counter_top_cfg cfg;
 	char str[TIME_SIZE];
 
 	if (!device_is_ready(rv8803_dev)) {
@@ -141,6 +147,21 @@ int main(void)
 	/* Update setup */
 	if (rtc_update_set_callback(rtc_dev, update_callback, NULL)) {
 		printk("Failed to set update callback using rtc_update_set_callback()\n");
+	}
+
+	/* Counter setup */
+	const struct counter_config_info *cnt_config =
+		(const struct counter_config_info *)cnt_dev->config;
+	printk("Counter: freq[%d]\n", cnt_config->freq);
+	printk("Counter: Max_value[%d]\n", cnt_config->max_top_value);
+
+	cfg.ticks = 2;
+	cfg.callback = period_callback;
+	if (counter_set_top_value(cnt_dev, &cfg)) {
+		printk("Failed to set Counter Top value\n");
+	}
+	if (counter_start(cnt_dev)) {
+		printk("Failed to start Counter\n");
 	}
 
 	while (1) {
