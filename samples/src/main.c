@@ -154,8 +154,9 @@ int main(void)
 		(const struct counter_config_info *)cnt_dev->config;
 	printk("Counter: freq[%d]\n", cnt_config->freq);
 	printk("Counter: Max_value[%d]\n", cnt_config->max_top_value);
+	printk("Counter: 2s ticks[%d]\n", counter_us_to_ticks(cnt_dev, 2000000));
 
-	cfg.ticks = 2;
+	cfg.ticks = counter_us_to_ticks(cnt_dev, 2000000);
 	cfg.callback = period_callback;
 	if (counter_set_top_value(cnt_dev, &cfg)) {
 		printk("Failed to set Counter Top value\n");
