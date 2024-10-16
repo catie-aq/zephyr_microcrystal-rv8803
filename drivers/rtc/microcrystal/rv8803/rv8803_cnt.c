@@ -16,11 +16,31 @@ LOG_MODULE_REGISTER(RV8803_CNT, CONFIG_RTC_LOG_LEVEL);
 #if CONFIG_COUNTER && CONFIG_RV8803_COUNTER_ENABLE
 static int rv8803_cnt_start(const struct device *dev)
 {
+	const struct rv8803_cnt_config *cnt_config = dev->config;
+	const struct rv8803_config *config = cnt_config->base_dev->config;
+	int err;
+
+	err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_EXTENSION,
+				     RV8803_COUNTER_EXTENSION_MASK, RV8803_ENABLE_COUNTER);
+	if (err < 0) {
+		return err;
+	}
+
 	return 0;
 }
 
 static int rv8803_cnt_stop(const struct device *dev)
 {
+	const struct rv8803_cnt_config *cnt_config = dev->config;
+	const struct rv8803_config *config = cnt_config->base_dev->config;
+	int err;
+
+	err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_EXTENSION,
+				     RV8803_COUNTER_EXTENSION_MASK, RV8803_DISABLE_COUNTER);
+	if (err < 0) {
+		return err;
+	}
+
 	return 0;
 }
 
