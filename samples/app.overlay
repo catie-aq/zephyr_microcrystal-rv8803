@@ -29,7 +29,7 @@
 
 		rv88030_cnt: rv8803-cnt {
 			compatible = "microcrystal,rv8803-cnt";
-			frequency = "4096";
+			frequency = "1";
 		};
 
 		rv88030_clk: rv8803-clk {
