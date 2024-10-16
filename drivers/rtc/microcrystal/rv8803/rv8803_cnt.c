@@ -21,7 +21,7 @@ static int rv8803_cnt_start(const struct device *dev)
 	int err;
 
 	err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_EXTENSION,
-				     RV8803_COUNTER_EXTENSION_MASK, RV8803_ENABLE_COUNTER);
+				     RV8803_EXTENSION_MASK_COUNTER, RV8803_ENABLE_COUNTER);
 	if (err < 0) {
 		return err;
 	}
@@ -36,7 +36,7 @@ static int rv8803_cnt_stop(const struct device *dev)
 	int err;
 
 	err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_EXTENSION,
-				     RV8803_COUNTER_EXTENSION_MASK, RV8803_DISABLE_COUNTER);
+				     RV8803_EXTENSION_MASK_COUNTER, RV8803_DISABLE_COUNTER);
 	if (err < 0) {
 		return err;
 	}
@@ -70,6 +70,41 @@ static uint32_t rv8803_cnt_get_pending_int(const struct device *dev)
 	return 0;
 }
 
+static void rv8803_cnt_worker(struct k_work *p_work)
+{
+	struct rv8803_irq *data = CONTAINER_OF(p_work, struct rv8803_irq, cnt_work);
+	const struct rv8803_rtc_config *cnt_config = data->cnt_dev->config;
+	const struct rv8803_rtc_data *cnt_data = data->cnt_dev->data;
+	const struct rv8803_config *config = cnt_config->base_dev->config;
+	uint8_t reg;
+	int err;
+
+	LOG_DBG("Process Alarm worker from interrupt");
+
+	err = i2c_reg_read_byte_dt(&config->i2c_bus, RV8803_FLAG_MASK_COUNTER, &reg);
+	if (err < 0) {
+		LOG_ERR("Alarm worker I2C read FLAGS error");
+	}
+
+	if (reg & RV8803_FLAG_MASK_COUNTER) {
+		if ((cnt_data->counter_cb != NULL)) {
+			&&((cnt_data->counter_cb->callback != NULL))
+			{
+				LOG_DBG("Calling Cunter callback");
+				cnt_data->counter_cb->callback(data->cnt_dev,
+							       cnt_data->counter_cb->user_data);
+
+				err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG,
+							     RV8803_FLAG_MASK_COUNTER,
+							     RV8803_DISABLE_COUNTER);
+				if (err < 0) {
+					LOG_ERR("GPIO worker I2C update ALARM FLAG error");
+				}
+			}
+		}
+	}
+}
+
 /* RV8803 CNT init */
 static int rv8803_cnt_init(const struct device *dev)
 {
@@ -80,6 +115,11 @@ static int rv8803_cnt_init(const struct device *dev)
 	}
 	LOG_INF("RV8803 CNT: FREQ[%d]", cnt_config->info.freq);
 	LOG_INF("RV8803 CNT INIT");
+
+	struct rv8803_data *data = cnt_config->base_dev->data;
+
+	data->irq->cnt_dev = dev;
+	data->irq->cnt_work.handler = rv8803_cnt_worker;
 
 	return 0;
 }
