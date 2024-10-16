@@ -70,11 +70,6 @@ static uint32_t rv8803_cnt_get_pending_int(const struct device *dev)
 	return 0;
 }
 
-static uint32_t rv8803_cnt_get_freq(const struct device *dev)
-{
-	return 0;
-}
-
 /* RV8803 CNT init */
 static int rv8803_cnt_init(const struct device *dev)
 {
@@ -96,7 +91,6 @@ static const struct counter_driver_api rv8803_cnt_driver_api = {
 	.set_top_value = rv8803_cnt_set_top_value,
 	.get_top_value = rv8803_cnt_get_top_value,
 	.get_pending_int = rv8803_cnt_get_pending_int,
-	.get_freq = rv8803_cnt_get_freq,
 };
 
 /* RV8803 CNT Initialization MACRO */
