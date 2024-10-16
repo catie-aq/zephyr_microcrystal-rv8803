@@ -24,17 +24,6 @@ static int rv8803_cnt_stop(const struct device *dev)
 	return 0;
 }
 
-static int rv8803_cnt_set_alarm(const struct device *dev, uint8_t chan_id,
-				const struct counter_alarm_cfg *alarm_cfg)
-{
-	return 0;
-}
-
-static int rv8803_cnt_cancel_alarm(const struct device *dev, uint8_t chan_id)
-{
-	return 0;
-}
-
 static int rv8803_cnt_set_top_value(const struct device *dev, const struct counter_top_cfg *cfg)
 {
 	return 0;
@@ -82,8 +71,6 @@ static int rv8803_cnt_init(const struct device *dev)
 static const struct counter_driver_api rv8803_cnt_driver_api = {
 	.start = rv8803_cnt_start,
 	.stop = rv8803_cnt_stop,
-	.set_alarm = rv8803_cnt_set_alarm,
-	.cancel_alarm = rv8803_cnt_cancel_alarm,
 	.set_top_value = rv8803_cnt_set_top_value,
 	.get_top_value = rv8803_cnt_get_top_value,
 	.get_max_top_value = rv8803_cnt_get_max_top_value,
