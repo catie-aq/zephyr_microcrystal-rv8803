@@ -20,35 +20,11 @@ static int rv8803_cnt_start(const struct device *dev)
 	const struct rv8803_config *config = cnt_config->base_dev->config;
 	int err;
 
-	LOG_WRN("TROLL!");
-	uint8_t value;
-	err = i2c_reg_read_byte_dt(&config->i2c_bus, RV8803_REGISTER_EXTENSION, &value);
-	if (err < 0) {
-		return err;
-	}
-	LOG_WRN("INIT: [0x%02X]", value);
-
 	err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_EXTENSION,
 				     RV8803_EXTENSION_MASK_COUNTER, RV8803_ENABLE_COUNTER);
 	if (err < 0) {
 		return err;
 	}
-
-	err = i2c_reg_read_byte_dt(&config->i2c_bus, RV8803_REGISTER_EXTENSION, &value);
-	if (err < 0) {
-		return err;
-	}
-	LOG_WRN("EXT: [0x%02X]", value);
-	err = i2c_reg_read_byte_dt(&config->i2c_bus, RV8803_REGISTER_CONTROL, &value);
-	if (err < 0) {
-		return err;
-	}
-	LOG_WRN("CTR: [0x%02X]", value);
-	err = i2c_reg_read_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG, &value);
-	if (err < 0) {
-		return err;
-	}
-	LOG_WRN("FLG: [0x%02X]", value);
 
 	return 0;
 }
