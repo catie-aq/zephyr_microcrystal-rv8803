@@ -16,9 +16,18 @@
 
 /* Structs */
 #if CONFIG_COUNTER && CONFIG_RV8803_COUNTER_ENABLE
+
+enum frequency_selection {
+	RV8803_4096_HZ = RV8803_COUNTER_FREQUENCY_4096_HZ,
+	RV8803_64_HZ = RV8803_COUNTER_FREQUENCY_64_HZ,
+	RV8803_1_HZ = RV8803_COUNTER_FREQUENCY_1_HZ,
+	RV8803_1_60_HZ = RV8803_COUNTER_FREQUENCY_1_60_HZ,
+};
+
 /* RV8803 CLK config */
 struct rv8803_cnt_config {
 	const struct device *base_dev; // Parent device reference
+	enum frequency_selection freq;
 };
 
 /* RV8803 CLK data */

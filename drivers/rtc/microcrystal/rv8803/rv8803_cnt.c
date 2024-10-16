@@ -96,6 +96,7 @@ static const struct counter_driver_api rv8803_cnt_driver_api = {
 #define RV8803_CNT_INIT(n)                                                                         \
 	static const struct rv8803_cnt_config rv8803_cnt_config_##n = {                            \
 		.base_dev = DEVICE_DT_GET(DT_PARENT(DT_INST(n, DT_DRV_COMPAT))),                   \
+		.freq = DT_INST_ENUM_IDX(n, frequency),                                            \
 	};                                                                                         \
 	static struct rv8803_cnt_data rv8803_cnt_data_##n;                                         \
 	DEVICE_DT_INST_DEFINE(n, rv8803_cnt_init, NULL, &rv8803_cnt_data_##n,                      \
