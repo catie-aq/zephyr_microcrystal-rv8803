@@ -45,6 +45,11 @@ static uint32_t rv8803_cnt_get_top_value(const struct device *dev)
 	return 0;
 }
 
+static uint32_t rv8803_cnt_get_max_top_value(const struct device *dev)
+{
+	return 0;
+}
+
 static uint32_t rv8803_cnt_get_pending_int(const struct device *dev)
 {
 	return 0;
@@ -81,6 +86,7 @@ static const struct counter_driver_api rv8803_cnt_driver_api = {
 	.cancel_alarm = rv8803_cnt_cancel_alarm,
 	.set_top_value = rv8803_cnt_set_top_value,
 	.get_top_value = rv8803_cnt_get_top_value,
+	.get_max_top_value = rv8803_cnt_get_max_top_value,
 	.get_pending_int = rv8803_cnt_get_pending_int,
 	.us_to_ticks = rv8803_cnt_us_to_ticks,
 	.ticks_to_us = rv8803_cnt_ticks_to_us,
