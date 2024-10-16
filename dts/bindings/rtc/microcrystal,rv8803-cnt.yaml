@@ -7,3 +7,14 @@ compatible: "microcrystal,rv8803-cnt"
 
 include:
   - name: base.yaml
+
+properties:
+  frequency:
+    type: string
+    required: true
+    description: Configures RV-8803 counter frequency (Hz).
+    enum:
+      - "4096"
+      - "64"
+      - "1"
+      - "1/60"
