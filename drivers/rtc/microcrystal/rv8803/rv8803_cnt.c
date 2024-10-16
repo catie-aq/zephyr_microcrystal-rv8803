@@ -51,12 +51,18 @@ static int rv8803_cnt_set_top_value(const struct device *dev, const struct count
 
 static uint32_t rv8803_cnt_get_top_value(const struct device *dev)
 {
-	return 0;
-}
+	const struct rv8803_cnt_config *cnt_config = dev->config;
+	const struct rv8803_config *config = cnt_config->base_dev->config;
+	uint8_t regs[2];
+	int err;
 
-static uint32_t rv8803_cnt_get_max_top_value(const struct device *dev)
-{
-	return RV8803_COUNTER_MAX_TOP_VALUE;
+	err = i2c_burst_read_dt(&config->i2c_bus, RV8803_REGISTER_TIMER_COUNTER_0, regs,
+				sizeof(regs));
+	if (err < 0) {
+		return err;
+	}
+
+	return (((regs[1] & 0x0F) << 8) | ((regs[0] & 0xFF) << 0));
 }
 
 static uint32_t rv8803_cnt_get_pending_int(const struct device *dev)
@@ -72,11 +78,12 @@ static uint32_t rv8803_cnt_get_freq(const struct device *dev)
 /* RV8803 CNT init */
 static int rv8803_cnt_init(const struct device *dev)
 {
-	const struct rv8803_cnt_config *config = dev->config;
+	const struct rv8803_cnt_config *cnt_config = dev->config;
 
-	if (!device_is_ready(config->base_dev)) {
+	if (!device_is_ready(cnt_config->base_dev)) {
 		return -ENODEV;
 	}
+	LOG_INF("RV8803 CNT: FREQ[%d]", cnt_config->info.freq);
 	LOG_INF("RV8803 CNT INIT");
 
 	return 0;
@@ -88,7 +95,6 @@ static const struct counter_driver_api rv8803_cnt_driver_api = {
 	.stop = rv8803_cnt_stop,
 	.set_top_value = rv8803_cnt_set_top_value,
 	.get_top_value = rv8803_cnt_get_top_value,
-	.get_max_top_value = rv8803_cnt_get_max_top_value,
 	.get_pending_int = rv8803_cnt_get_pending_int,
 	.get_freq = rv8803_cnt_get_freq,
 };
@@ -96,8 +102,13 @@ static const struct counter_driver_api rv8803_cnt_driver_api = {
 /* RV8803 CNT Initialization MACRO */
 #define RV8803_CNT_INIT(n)                                                                         \
 	static const struct rv8803_cnt_config rv8803_cnt_config_##n = {                            \
+		.info =                                                                            \
+			{                                                                          \
+				.max_top_value = RV8803_COUNTER_MAX_TOP_VALUE,                     \
+				.freq = rv8803_frequency[DT_INST_ENUM_IDX(n, frequency)],          \
+				.channels = RV8803_COUNTER_CHANNELS,                               \
+			},                                                                         \
 		.base_dev = DEVICE_DT_GET(DT_PARENT(DT_INST(n, DT_DRV_COMPAT))),                   \
-		.freq = DT_INST_ENUM_IDX(n, frequency),                                            \
 	};                                                                                         \
 	static struct rv8803_cnt_data rv8803_cnt_data_##n;                                         \
 	DEVICE_DT_INST_DEFINE(n, rv8803_cnt_init, NULL, &rv8803_cnt_data_##n,                      \
