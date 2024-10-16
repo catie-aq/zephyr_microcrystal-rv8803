@@ -46,6 +46,75 @@ static int rv8803_cnt_stop(const struct device *dev)
 
 static int rv8803_cnt_set_top_value(const struct device *dev, const struct counter_top_cfg *cfg)
 {
+	const struct rv8803_cnt_config *cnt_config = dev->config;
+	const struct rv8803_config *config = cnt_config->base_dev->config;
+	int err;
+
+	if ((cfg->ticks <= 0) || (cfg->ticks >= RV8803_COUNTER_MAX_TOP_VALUE)) {
+		return -EINVAL;
+	}
+
+	/* TE, TIE and TF to 0 : stop interrupt */
+	err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_EXTENSION,
+				     RV8803_EXTENSION_MASK_COUNTER, RV8803_DISABLE_COUNTER);
+	if (err < 0) {
+		return err;
+	}
+	err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_CONTROL,
+				     RV8803_CONTROL_MASK_COUNTER, RV8803_DISABLE_COUNTER);
+	if (err < 0) {
+		return err;
+	}
+	err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG,
+				     RV8803_FLAG_MASK_COUNTER, RV8803_DISABLE_COUNTER);
+	if (err < 0) {
+		return err;
+	}
+
+	/* Choose TD clock frequency */
+	uint8_t value;
+	switch (cnt_config->info.freq) {
+	case 4096:
+		value = RV8803_COUNTER_FREQUENCY_4096_HZ;
+		break;
+
+	case 64:
+		value = RV8803_COUNTER_FREQUENCY_64_HZ;
+		break;
+
+	case 1:
+		value = RV8803_COUNTER_FREQUENCY_1_HZ;
+		break;
+
+	default:
+		return -EINVAL;
+	}
+	err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_EXTENSION,
+				     RV8803_FREQUENCY_MASK_COUNTER, value);
+	if (err < 0) {
+		return err;
+	}
+
+	/* Choose TC0/TC1 counter period */
+	value = cfg->ticks & 0xFF;
+	err = i2c_reg_write_byte_dt(&config->i2c_bus, RV8803_REGISTER_TIMER_COUNTER_0, value);
+	if (err < 0) {
+		return err;
+	}
+	value = (cfg->ticks >> 8) & 0x0F;
+	err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_TIMER_COUNTER_1, 0x0F,
+				     value);
+	if (err < 0) {
+		return err;
+	}
+
+	/* TIE to 1 : enable interrupt */
+	err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_CONTROL,
+				     RV8803_CONTROL_MASK_COUNTER, RV8803_DISABLE_COUNTER);
+	if (err < 0) {
+		return err;
+	}
+
 	return 0;
 }
 
@@ -67,14 +136,24 @@ static uint32_t rv8803_cnt_get_top_value(const struct device *dev)
 
 static uint32_t rv8803_cnt_get_pending_int(const struct device *dev)
 {
-	return 0;
+	const struct rv8803_cnt_config *cnt_config = dev->config;
+	const struct rv8803_config *config = cnt_config->base_dev->config;
+	uint8_t reg;
+	int err;
+
+	err = i2c_reg_read_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG, &reg);
+	if (err < 0) {
+		return err;
+	}
+
+	return (reg & RV8803_ENABLE_COUNTER);
 }
 
 static void rv8803_cnt_worker(struct k_work *p_work)
 {
 	struct rv8803_irq *data = CONTAINER_OF(p_work, struct rv8803_irq, cnt_work);
-	const struct rv8803_rtc_config *cnt_config = data->cnt_dev->config;
-	const struct rv8803_rtc_data *cnt_data = data->cnt_dev->data;
+	const struct rv8803_cnt_config *cnt_config = data->cnt_dev->config;
+	const struct rv8803_cnt_data *cnt_data = data->cnt_dev->data;
 	const struct rv8803_config *config = cnt_config->base_dev->config;
 	uint8_t reg;
 	int err;
@@ -87,19 +166,16 @@ static void rv8803_cnt_worker(struct k_work *p_work)
 	}
 
 	if (reg & RV8803_FLAG_MASK_COUNTER) {
-		if ((cnt_data->counter_cb != NULL)) {
-			&&((cnt_data->counter_cb->callback != NULL))
-			{
-				LOG_DBG("Calling Cunter callback");
-				cnt_data->counter_cb->callback(data->cnt_dev,
-							       cnt_data->counter_cb->user_data);
+		if ((cnt_data->counter_cb != NULL) && (cnt_data->counter_cb->callback != NULL)) {
+			LOG_DBG("Calling Counter callback");
+			cnt_data->counter_cb->callback(data->cnt_dev,
+						       cnt_data->counter_cb->user_data);
 
-				err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG,
-							     RV8803_FLAG_MASK_COUNTER,
-							     RV8803_DISABLE_COUNTER);
-				if (err < 0) {
-					LOG_ERR("GPIO worker I2C update ALARM FLAG error");
-				}
+			err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG,
+						     RV8803_FLAG_MASK_COUNTER,
+						     RV8803_DISABLE_COUNTER);
+			if (err < 0) {
+				LOG_ERR("GPIO worker I2C update ALARM FLAG error");
 			}
 		}
 	}
