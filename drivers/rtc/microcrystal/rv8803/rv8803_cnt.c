@@ -20,11 +20,35 @@ static int rv8803_cnt_start(const struct device *dev)
 	const struct rv8803_config *config = cnt_config->base_dev->config;
 	int err;
 
+	LOG_WRN("TROLL!");
+	uint8_t value;
+	err = i2c_reg_read_byte_dt(&config->i2c_bus, RV8803_REGISTER_EXTENSION, &value);
+	if (err < 0) {
+		return err;
+	}
+	LOG_WRN("INIT: [0x%02X]", value);
+
 	err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_EXTENSION,
 				     RV8803_EXTENSION_MASK_COUNTER, RV8803_ENABLE_COUNTER);
 	if (err < 0) {
 		return err;
 	}
+
+	err = i2c_reg_read_byte_dt(&config->i2c_bus, RV8803_REGISTER_EXTENSION, &value);
+	if (err < 0) {
+		return err;
+	}
+	LOG_WRN("EXT: [0x%02X]", value);
+	err = i2c_reg_read_byte_dt(&config->i2c_bus, RV8803_REGISTER_CONTROL, &value);
+	if (err < 0) {
+		return err;
+	}
+	LOG_WRN("CTR: [0x%02X]", value);
+	err = i2c_reg_read_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG, &value);
+	if (err < 0) {
+		return err;
+	}
+	LOG_WRN("FLG: [0x%02X]", value);
 
 	return 0;
 }
@@ -110,10 +134,15 @@ static int rv8803_cnt_set_top_value(const struct device *dev, const struct count
 
 	/* TIE to 1 : enable interrupt */
 	err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_CONTROL,
-				     RV8803_CONTROL_MASK_COUNTER, RV8803_DISABLE_COUNTER);
+				     RV8803_CONTROL_MASK_COUNTER, RV8803_ENABLE_COUNTER);
 	if (err < 0) {
 		return err;
 	}
+
+	/* Register callback */
+	struct rv8803_cnt_data *cnt_data = dev->data;
+	cnt_data->counter_cb = cfg->callback;
+	cnt_data->user_data = cfg->user_data;
 
 	return 0;
 }
@@ -158,18 +187,17 @@ static void rv8803_cnt_worker(struct k_work *p_work)
 	uint8_t reg;
 	int err;
 
-	LOG_DBG("Process Alarm worker from interrupt");
+	LOG_DBG("Process Counter worker from interrupt");
 
-	err = i2c_reg_read_byte_dt(&config->i2c_bus, RV8803_FLAG_MASK_COUNTER, &reg);
+	err = i2c_reg_read_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG, &reg);
 	if (err < 0) {
-		LOG_ERR("Alarm worker I2C read FLAGS error");
+		LOG_ERR("Counter worker I2C read FLAGS error");
 	}
 
 	if (reg & RV8803_FLAG_MASK_COUNTER) {
-		if ((cnt_data->counter_cb != NULL) && (cnt_data->counter_cb->callback != NULL)) {
+		if (cnt_data->counter_cb != NULL) {
 			LOG_DBG("Calling Counter callback");
-			cnt_data->counter_cb->callback(data->cnt_dev,
-						       cnt_data->counter_cb->user_data);
+			cnt_data->counter_cb(data->cnt_dev, cnt_data->user_data);
 
 			err = i2c_reg_update_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG,
 						     RV8803_FLAG_MASK_COUNTER,
