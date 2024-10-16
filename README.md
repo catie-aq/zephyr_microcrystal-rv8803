@@ -10,4 +10,4 @@ Implemented feature:
 - [X] Update Interface
 - [X] Low battery interrupt
 - [X] Clock Control Interface
-- [ ] Counter Interface
+- [X] Counter Interface
