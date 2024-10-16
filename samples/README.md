@@ -6,11 +6,13 @@ This sample application provides an example usage of the RTC RV8803 from Microcr
 - It sets the RTC time to the `Wed Dec 31 2025 23:59:55 GMT+0000`
 - It sets an alarm to send an interrupt each time the RTC time reaches the minute `01` (i.e. each hour at minute `01`).
 - Use the alarm callback to change the `clock_OUT` rate between `32.768 kHz` and `1024 Hz`.
-- Use the update callback to print a message.
+- Use the update callback to print a message each second.
+- Use the COUNTER callback to printa message every 2 second.
 - It gets the RTC time and prints it each second.
 
 > [!NOTE]
 > Alarms can not trigger more often than every minute.
+> Counter support `1/60 Hz` but Zephyr doesn't support it.
 
 # Requirements
 
@@ -19,6 +21,8 @@ This sample application provides an example usage of the RTC RV8803 from Microcr
 - Available IRQ GPIO for Alarm and Update interrupts.
 - `CONFIG_RTC=y` in prj.conf to use RTC API.
 - Set `CONFIG_RV8803_RTC_ENABLE=n` in prj.conf to disable RTC regardless of `CONFIG_RTC`.
+- `CONFIG_COUNTER=y` in prj.conf to use COUNTER API.
+- Set `CONFIG_RV8803_COUNTER_ENABLE=n` in prj.conf to disable COUNTER regardless of `CONFIG_RTC`.
 - `CONFIG_RTC_ALARM=y` in prj.conf to use RTC arlams.
 - `CONFIG_RTC_UPDATE=y` in prj.conf to use RTC update.
 - `CONFIG_CLOCK_CONTROL=y` in prj.conf to use CLK API.
@@ -54,10 +58,12 @@ RTC_TIME[0] [Wed Dec 31 23:59:56 2025]
 RTC Update detected!!
 RTC_TIME[0] [Wed Dec 31 23:59:57 2025]
 RTC Update detected!!
+CNT Period detected!!
 RTC_TIME[0] [Wed Dec 31 23:59:58 2025]
 RTC Update detected!!
 RTC_TIME[0] [Wed Dec 31 23:59:59 2025]
 RTC Update detected!!
+CNT Period detected!!
 RTC_TIME[0] [Thu Jan  1 00:00:00 2026]
 RTC Update detected!!
 RTC_TIME[0] [Thu Jan  1 00:00:01 2026]
@@ -66,6 +72,7 @@ RTC_TIME[0] [Thu Jan  1 00:00:02 2026]
 RTC Update detected!!
 RTC_TIME[0] [Thu Jan  1 00:00:03 2026]
 RTC Update detected!!
+CNT Period detected!!
 
 ...
 
@@ -73,15 +80,18 @@ RTC_TIME[0] [Thu Jan  1 00:00:58 2026]
 RTC Update detected!!
 RTC_TIME[0] [Thu Jan  1 00:00:59 2026]
 RTC Update detected!!
+CNT Period detected!!
 RTC_TIME[0] [Thu Jan  1 00:01:00 2026]
 RTC Update detected!!
 RTC Alarm detected: set rate[1024 Hz]!!
 RTC_TIME[0] [Thu Jan  1 00:01:01 2026]
 RTC Update detected!!
+CNT Period detected!!
 RTC_TIME[0] [Thu Jan  1 00:01:02 2026]
 RTC Update detected!!
 RTC_TIME[0] [Thu Jan  1 00:01:03 2026]
 RTC Update detected!!
+CNT Period detected!!
 
 ...
 
@@ -89,15 +99,18 @@ RTC_TIME[0] [Thu Jan  1 01:00:58 2026]
 RTC Update detected!!
 RTC_TIME[0] [Thu Jan  1 01:00:59 2026]
 RTC Update detected!!
+CNT Period detected!!
 RTC_TIME[0] [Thu Jan  1 01:01:00 2026]
 RTC Update detected!!
 RTC Alarm detected: set rate[32768 Hz]!!
 RTC_TIME[0] [Thu Jan  1 01:01:01 2026]
 RTC Update detected!!
+CNT Period detected!!
 RTC_TIME[0] [Thu Jan  1 01:01:02 2026]
 RTC Update detected!!
 RTC_TIME[0] [Thu Jan  1 01:01:03 2026]
 RTC Update detected!!
+CNT Period detected!!
 
 <repeats endlessly>
 ```
