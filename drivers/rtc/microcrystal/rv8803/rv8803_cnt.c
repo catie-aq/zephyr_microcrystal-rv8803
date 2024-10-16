@@ -14,44 +14,48 @@
 LOG_MODULE_REGISTER(RV8803_CNT, CONFIG_RTC_LOG_LEVEL);
 
 #if CONFIG_COUNTER && CONFIG_RV8803_COUNTER_ENABLE
-static int counter_rv8803_cnt_start(const struct device *dev)
+static int rv8803_cnt_start(const struct device *dev)
 {
 	return 0;
 }
 
-static int counter_rv8803_cnt_stop(const struct device *dev)
+static int rv8803_cnt_stop(const struct device *dev)
 {
 	return 0;
 }
 
-static int counter_rv8803_cnt_get_value(const struct device *dev, uint32_t *ticks)
+static int rv8803_cnt_set_alarm(const struct device *dev, uint8_t chan_id,
+				const struct counter_alarm_cfg *alarm_cfg)
 {
 	return 0;
 }
 
-static int counter_rv8803_cnt_set_alarm(const struct device *dev, uint8_t chan_id,
-					const struct counter_alarm_cfg *alarm_cfg)
+static int rv8803_cnt_cancel_alarm(const struct device *dev, uint8_t chan_id)
 {
 	return 0;
 }
 
-static int counter_rv8803_cnt_cancel_alarm(const struct device *dev, uint8_t chan_id)
+static int rv8803_cnt_set_top_value(const struct device *dev, const struct counter_top_cfg *cfg)
 {
 	return 0;
 }
 
-static int counter_rv8803_cnt_set_top_value(const struct device *dev,
-					    const struct counter_top_cfg *cfg)
+static uint32_t rv8803_cnt_get_top_value(const struct device *dev)
 {
 	return 0;
 }
 
-static uint32_t counter_rv8803_cnt_get_top_value(const struct device *dev)
+static uint32_t rv8803_cnt_get_pending_int(const struct device *dev)
 {
 	return 0;
 }
 
-static uint32_t counter_rv8803_cnt_get_pending_int(const struct device *dev)
+static uint32_t rv8803_cnt_us_to_ticks(const struct device *dev, uint64_t us)
+{
+	return 0;
+}
+
+static uint64_t rv8803_cnt_ticks_to_us(const struct device *dev, uint32_t ticks)
 {
 	return 0;
 }
@@ -71,13 +75,15 @@ static int rv8803_cnt_init(const struct device *dev)
 
 /* RV8803 CNT driver API */
 static const struct counter_driver_api rv8803_cnt_driver_api = {
-	.start = counter_rv8803_cnt_start,
-	.stop = counter_rv8803_cnt_stop,
-	.set_alarm = counter_rv8803_cnt_set_alarm,
-	.cancel_alarm = counter_rv8803_cnt_cancel_alarm,
-	.set_top_value = counter_rv8803_cnt_set_top_value,
-	.get_top_value = counter_rv8803_cnt_get_top_value,
-	.get_pending_int = counter_rv8803_cnt_get_pending_int,
+	.start = rv8803_cnt_start,
+	.stop = rv8803_cnt_stop,
+	.set_alarm = rv8803_cnt_set_alarm,
+	.cancel_alarm = rv8803_cnt_cancel_alarm,
+	.set_top_value = rv8803_cnt_set_top_value,
+	.get_top_value = rv8803_cnt_get_top_value,
+	.get_pending_int = rv8803_cnt_get_pending_int,
+	.us_to_ticks = rv8803_cnt_us_to_ticks,
+	.ticks_to_us = rv8803_cnt_ticks_to_us,
 };
 
 /* RV8803 CNT Initialization MACRO */
