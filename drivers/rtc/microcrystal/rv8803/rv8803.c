@@ -27,7 +27,7 @@ static int rv8803_init(const struct device *dev)
 #if CONFIG_RV8803_DETECT_BATTERY_STATE
 	struct rv8803_data *data = dev->data;
 	uint8_t value;
-	err = i2c_reg_read_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG, &value);
+	int err = i2c_reg_read_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG, &value);
 	if (err < 0) {
 		LOG_ERR("Failed to read FLAGS register!!");
 		return err;
