@@ -15,7 +15,6 @@ LOG_MODULE_REGISTER(RV8803, CONFIG_RTC_LOG_LEVEL);
 static int rv8803_init(const struct device *dev)
 {
 	const struct rv8803_config *config = dev->config;
-	int err;
 
 	if (!i2c_is_ready_dt(&config->i2c_bus)) {
 		LOG_ERR("I2C bus not ready!!");
