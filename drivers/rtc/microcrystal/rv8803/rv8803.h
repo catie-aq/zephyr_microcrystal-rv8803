@@ -42,10 +42,10 @@ struct rv8803_config {
 
 /* RV8803 Base data */
 struct rv8803_data {
-#if CONFIG_RV8803_BATTERY_ENABLE
+#if CONFIG_RV8803_DETECT_BATTERY_STATE
 	bool power_on_reset;
 	bool low_battery;
-#endif /* CONFIG_RV8803_BATTERY_ENABLE */
+#endif /* CONFIG_RV8803_DETECT_BATTERY_STATE */
 };
 
 #endif /* ZEPHYR_DRIVERS_RTC_RV8803_H_ */

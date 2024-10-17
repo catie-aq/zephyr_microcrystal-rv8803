@@ -24,7 +24,7 @@ static int rv8803_init(const struct device *dev)
 
 	k_sleep(K_MSEC(RV8803_STARTUP_TIMING_MS));
 
-#if CONFIG_RV8803_BATTERY_ENABLE
+#if CONFIG_RV8803_DETECT_BATTERY_STATE
 	struct rv8803_data *data = dev->data;
 	uint8_t value;
 	err = i2c_reg_read_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG, &value);
@@ -52,7 +52,7 @@ static int rv8803_init(const struct device *dev)
 			return err;
 		}
 	}
-#endif /* CONFIG_RV8803_BATTERY_ENABLE */
+#endif /* CONFIG_RV8803_DETECT_BATTERY_STATE */
 
 	LOG_INF("RV8803 INIT");
 
