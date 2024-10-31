@@ -51,6 +51,8 @@
 #define RV8803_HAS_IRQ 1
 #elif DT_ANY_INST_PARENT_HAS_PROP_STATUS_OKAY(irq_gpios)
 #define RV8803_HAS_IRQ 1
+#else
+#define RV8803_HAS_IRQ 0
 #endif
 
 #if RV8803_HAS_IRQ
