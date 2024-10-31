@@ -154,6 +154,7 @@ static uint32_t rv8803_cnt_get_pending_int(const struct device *dev)
 	return (reg & RV8803_ENABLE_COUNTER);
 }
 
+#if RV8803_HAS_IRQ
 static void rv8803_cnt_worker(struct k_work *p_work)
 {
 	struct rv8803_irq *data = CONTAINER_OF(p_work, struct rv8803_irq, cnt_work);
@@ -184,6 +185,7 @@ static void rv8803_cnt_worker(struct k_work *p_work)
 		}
 	}
 }
+#endif /* RV8803_HAS_IRQ */
 
 /* RV8803 CNT init */
 static int rv8803_cnt_init(const struct device *dev)
@@ -194,12 +196,15 @@ static int rv8803_cnt_init(const struct device *dev)
 		return -ENODEV;
 	}
 	LOG_INF("RV8803 CNT: FREQ[%d]", cnt_config->info.freq);
+	LOG_WRN("RV8803 PARENT: Missing IRQ");
 	LOG_INF("RV8803 CNT INIT");
 
+#if RV8803_HAS_IRQ
 	struct rv8803_data *data = cnt_config->base_dev->data;
 
 	data->irq->cnt_dev = dev;
 	data->irq->cnt_work.handler = rv8803_cnt_worker;
+#endif /* RV8803_HAS_IRQ */
 
 	return 0;
 }
