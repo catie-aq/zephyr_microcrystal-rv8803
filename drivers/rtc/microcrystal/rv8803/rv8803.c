@@ -11,7 +11,7 @@
 
 LOG_MODULE_REGISTER(RV8803, CONFIG_RTC_LOG_LEVEL);
 
-#if defined(RV8803_HAS_IRQ)
+#if RV8803_HAS_IRQ
 static void rv8803_gpio_callback_handler(const struct device *p_port, struct gpio_callback *p_cb,
 					 gpio_port_pins_t pins)
 {
