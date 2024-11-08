@@ -36,20 +36,20 @@
 #define RV8803_STARTUP_TIMING_MS 80
 
 /* DEFINITION of PROPERTY PARENT cf. include/zephyr/devicetree.h */
-#define DT_INST_PARENT_NODE_HAS_PROP(inst, prop) DT_NODE_HAS_PROP(DT_INST_PARENT(inst), prop)
+#define RV8803_DT_INST_PARENT_NODE_HAS_PROP(inst, prop) DT_NODE_HAS_PROP(DT_INST_PARENT(inst), prop)
 
-#define DT_ANY_INST_PARENT_HAS_PROP_STATUS_OKAY__(idx, prop)                                       \
-	COND_CODE_1(DT_INST_PARENT_NODE_HAS_PROP(idx, prop), (1, ), ())
+#define RV8803_DT_ANY_INST_PARENT_HAS_PROP_STATUS_OKAY__(idx, prop)                                \
+	COND_CODE_1(RV8803_DT_INST_PARENT_NODE_HAS_PROP(idx, prop), (1, ), ())
 
-#define DT_ANY_INST_PARENT_HAS_PROP_STATUS_OKAY_(prop)                                             \
-	DT_INST_FOREACH_STATUS_OKAY_VARGS(DT_ANY_INST_PARENT_HAS_PROP_STATUS_OKAY__, prop)
+#define RV8803_DT_ANY_INST_PARENT_HAS_PROP_STATUS_OKAY_(prop)                                      \
+	DT_INST_FOREACH_STATUS_OKAY_VARGS(RV8803_DT_ANY_INST_PARENT_HAS_PROP_STATUS_OKAY__, prop)
 
-#define DT_ANY_INST_PARENT_HAS_PROP_STATUS_OKAY(prop)                                              \
-	COND_CODE_1(IS_EMPTY(DT_ANY_INST_PARENT_HAS_PROP_STATUS_OKAY_(prop)), (0), (1))
+#define RV8803_DT_ANY_INST_PARENT_HAS_PROP_STATUS_OKAY(prop)                                       \
+	COND_CODE_1(IS_EMPTY(RV8803_DT_ANY_INST_PARENT_HAS_PROP_STATUS_OKAY_(prop)), (0), (1))
 
 #if DT_ANY_INST_HAS_PROP_STATUS_OKAY(irq_gpios)
 #define RV8803_HAS_IRQ 1
-#elif DT_ANY_INST_PARENT_HAS_PROP_STATUS_OKAY(irq_gpios)
+#elif RV8803_DT_ANY_INST_PARENT_HAS_PROP_STATUS_OKAY(irq_gpios)
 #define RV8803_HAS_IRQ 1
 #else
 #define RV8803_HAS_IRQ 0
@@ -95,10 +95,10 @@ struct rv8803_config {
 };
 
 struct rv8803_battery {
-#if CONFIG_RV8803_BATTERY_ENABLE
+#if CONFIG_RV8803_DETECT_BATTERY_STATE
 	bool power_on_reset;
 	bool low_battery;
-#endif /* CONFIG_RV8803_BATTERY_ENABLE */
+#endif /* CONFIG_RV8803_DETECT_BATTERY_STATE */
 };
 
 struct rv8803_irq {
