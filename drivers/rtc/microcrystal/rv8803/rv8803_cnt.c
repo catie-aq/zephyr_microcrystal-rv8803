@@ -196,7 +196,6 @@ static int rv8803_cnt_init(const struct device *dev)
 		return -ENODEV;
 	}
 	LOG_INF("RV8803 CNT: FREQ[%d]", cnt_config->info.freq);
-	LOG_WRN("RV8803 PARENT: Missing IRQ");
 	LOG_INF("RV8803 CNT INIT");
 
 #if RV8803_HAS_IRQ
@@ -204,6 +203,9 @@ static int rv8803_cnt_init(const struct device *dev)
 
 	data->irq->cnt_dev = dev;
 	data->irq->cnt_work.handler = rv8803_cnt_worker;
+#else
+	LOG_ERR("RV8803 PARENT: Missing IRQ!");
+	return -ENODEV;
 #endif /* RV8803_HAS_IRQ */
 
 	return 0;

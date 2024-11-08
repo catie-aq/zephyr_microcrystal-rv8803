@@ -121,10 +121,4 @@ struct rv8803_data {
 	struct rv8803_irq *irq;
 };
 
-/* RV8803 Base data */
-struct rv8803_data {
-	struct rv8803_battery *bat;
-	struct rv8803_irq *irq;
-};
-
 #endif /* ZEPHYR_DRIVERS_RTC_RV8803_H_ */
