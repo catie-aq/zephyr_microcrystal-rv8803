@@ -10,8 +10,8 @@
 	aliases {
 		rv8803 = &rv88030;
 		rtc8803 = &rv88030_rtc;
-		counter8803 = &rv88030_cnt;
-		clock8803 = &rv88030_clk;
+		counter8803 = &rv88030_counter;
+		clock8803 = &rv88030_clock;
 	};
 };
 
@@ -27,13 +27,13 @@
 			compatible = "microcrystal,rv8803-rtc";
 		};
 
-		rv88030_cnt: rv8803-cnt {
-			compatible = "microcrystal,rv8803-cnt";
+		rv88030_counter: rv8803-counter {
+			compatible = "microcrystal,rv8803-counter";
 			frequency = "1";
 		};
 
-		rv88030_clk: rv8803-clk {
-			compatible = "microcrystal,rv8803-clk";
+		rv88030_clock: rv8803-clock {
+			compatible = "microcrystal,rv8803-clock";
 			#clock-cells = <0>;
 		};
 	};

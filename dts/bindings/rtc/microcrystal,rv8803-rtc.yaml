@@ -7,3 +7,5 @@ compatible: "microcrystal,rv8803-rtc"
 
 include:
   - name: rtc-device.yaml
+
+on-bus: rv8803

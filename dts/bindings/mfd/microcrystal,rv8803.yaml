@@ -1,16 +1,18 @@
 # Copyright (c) 2024 CATIE
 # SPDX-License-Identifier: Apache-2.0
 
-description: Micro Crystal AG RV-8803.
+description: Micro Crystal AG RV-8803 I2C-bus RTC, MFD device.
 
 compatible: "microcrystal,rv8803"
-
-on-bus: i2c
 
 include:
   - name: i2c-device.yaml
 
+on-bus: i2c
+
+bus: rv8803
+
 properties:
   irq-gpios:
     type: phandle-array
-    description: Configures RV-8803 RTC interrupt signal.
+    description: Configures RV-8803 MFD interrupt signal.
