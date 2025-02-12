@@ -3,13 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#define DT_DRV_COMPAT microcrystal_rv8803
-
 #include <zephyr/logging/log.h>
 
-#include "rv8803.h"
-
-LOG_MODULE_REGISTER(RV8803, CONFIG_RTC_LOG_LEVEL);
+#include "rv8803_api.h"
+#define DT_DRV_COMPAT microcrystal_rv8803
+#include "rv8803_mfd.h"
 
 #if RV8803_HAS_IRQ
 static void rv8803_gpio_callback_handler(const struct device *p_port, struct gpio_callback *p_cb,

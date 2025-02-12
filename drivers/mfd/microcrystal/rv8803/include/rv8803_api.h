@@ -1,13 +1,14 @@
 /*
- * Copyright (c) 2024, CATIE
+ * Copyright (c) 2025, CATIE
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef ZEPHYR_DRIVERS_RTC_RV8803_H_
-#define ZEPHYR_DRIVERS_RTC_RV8803_H_
+#ifndef ZEPHYR_DRIVERS_RTC_MICROCYSTAL_RV8803_API_H_
+#define ZEPHYR_DRIVERS_RTC_MICROCYSTAL_RV8803_API_H_
 
-#include <zephyr/drivers/i2c.h>
-#include <zephyr/drivers/gpio.h>
+#include <zephyr/kernel.h>
+
+#define DT_DRV_COMPAT microcrystal_rv8803
 
 /* Calendar Registers */
 #define RV8803_REGISTER_SECONDS 0x00
@@ -121,4 +122,6 @@ struct rv8803_data {
 	struct rv8803_irq *irq;
 };
 
-#endif /* ZEPHYR_DRIVERS_RTC_RV8803_H_ */
+#undef DT_DRV_COMPAT
+
+#endif /* ZEPHYR_DRIVERS_RTC_MICROCYSTAL_RV8803_API_H_ */

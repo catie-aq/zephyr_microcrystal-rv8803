@@ -3,13 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#define DT_DRV_COMPAT microcrystal_rv8803_clk
-
 #include <zephyr/drivers/clock_control.h>
 #include <zephyr/logging/log.h>
 
-#include "rv8803.h"
-#include "rv8803_clk.h"
+#include "rv8803_api.h"
+#define DT_DRV_COMPAT microcrystal_rv8803_clock
+#include "rv8803_clock.h"
 
 LOG_MODULE_REGISTER(RV8803_CLK, CONFIG_RTC_LOG_LEVEL);
 

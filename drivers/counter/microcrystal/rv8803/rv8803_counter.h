@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef ZEPHYR_DRIVERS_RTC_RV8803_CNT_H_
-#define ZEPHYR_DRIVERS_RTC_RV8803_CNT_H_
+#ifndef ZEPHYR_DRIVERS_RTC_MICROCYSTAL_RV8803_COUNTER_H_
+#define ZEPHYR_DRIVERS_RTC_MICROCYSTAL_RV8803_COUNTER_H_
 
 /* TIMER Counter Registers */
 #define RV8803_REGISTER_TIMER_COUNTER_0 0x0B
@@ -50,4 +50,4 @@ struct rv8803_cnt_data {
 	void *user_data;
 };
 #endif
-#endif /* ZEPHYR_DRIVERS_RTC_RV8803_CNT_H_ */
+#endif /* ZEPHYR_DRIVERS_RTC_MICROCYSTAL_RV8803_COUNTER_H_ */

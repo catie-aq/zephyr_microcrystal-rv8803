@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef ZEPHYR_DRIVERS_RTC_RV8803_CLK_H_
-#define ZEPHYR_DRIVERS_RTC_RV8803_CLK_H_
+#ifndef ZEPHYR_DRIVERS_RTC_MICROCYSTAL_RV8803_CLOCK_H_
+#define ZEPHYR_DRIVERS_RTC_MICROCYSTAL_RV8803_CLOCK_H_
 
 /* CLK OUT control*/
 #define RV8803_CLK_FREQUENCY_SHIFT    2
@@ -24,4 +24,4 @@ struct rv8803_clk_config {
 struct rv8803_clk_data {
 };
 #endif
-#endif /* ZEPHYR_DRIVERS_RTC_RV8803_CLK_H_ */
+#endif /* ZEPHYR_DRIVERS_RTC_MICROCYSTAL_RV8803_CLOCK_H_ */

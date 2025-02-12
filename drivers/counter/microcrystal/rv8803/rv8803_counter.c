@@ -3,13 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#define DT_DRV_COMPAT microcrystal_rv8803_cnt
-
 #include <zephyr/drivers/counter.h>
 #include <zephyr/logging/log.h>
 
-#include "rv8803.h"
-#include "rv8803_cnt.h"
+#include "rv8803_api.h"
+#define DT_DRV_COMPAT microcrystal_rv8803_counter
+#include "rv8803_counter.h"
 
 LOG_MODULE_REGISTER(RV8803_CNT, CONFIG_RTC_LOG_LEVEL);
 
