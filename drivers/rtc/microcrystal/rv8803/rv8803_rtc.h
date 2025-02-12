@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef ZEPHYR_DRIVERS_RTC_RV8803_RTC_H_
-#define ZEPHYR_DRIVERS_RTC_RV8803_RTC_H_
+#ifndef ZEPHYR_DRIVERS_RTC_MICROCYSTAL_RV8803_RTC_H_
+#define ZEPHYR_DRIVERS_RTC_MICROCYSTAL_RV8803_RTC_H_
 
 /* Data masks */
 #define RV8803_SECONDS_BITS GENMASK(6, 0)
@@ -87,4 +87,4 @@ struct rv8803_rtc_data {
 };
 #endif
 
-#endif /* ZEPHYR_DRIVERS_RTC_RV8803_RTC_H_ */
+#endif /* ZEPHYR_DRIVERS_RTC_MICROCYSTAL_RV8803_RTC_H_ */
