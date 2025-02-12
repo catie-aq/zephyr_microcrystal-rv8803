@@ -31,6 +31,44 @@ static void rv8803_gpio_callback_handler(const struct device *p_port, struct gpi
 }
 #endif /* RV8803_HAS_IRQ */
 
+#if CONFIG_MFD_RV8803_DETECT_BATTERY_STATE
+static int rv8803_detect_battery_state(const struct device *dev)
+{
+	const struct rv8803_config *config = dev->config;
+	struct rv8803_data *data = dev->data;
+	uint8_t value;
+	int err;
+
+	err = i2c_reg_read_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG, &value);
+	if (err < 0) {
+		LOG_ERR("Failed to read FLAGS register!!");
+		return err;
+	}
+	LOG_DBG("FLAG REGISTER: [0x%02X]",
+		value & (RV8803_FLAG_MASK_LOW_VOLTAGE_1 | RV8803_FLAG_MASK_LOW_VOLTAGE_2));
+	data->bat.power_on_reset = (value & RV8803_FLAG_MASK_LOW_VOLTAGE_2) >> 1;
+	data->bat.low_battery = value & RV8803_FLAG_MASK_LOW_VOLTAGE_1;
+
+	if (data->bat.power_on_reset) {
+		value &= ~RV8803_FLAG_MASK_LOW_VOLTAGE_2;
+		err = i2c_reg_write_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG, value);
+		if (err < 0) {
+			LOG_ERR("Failed to write FLAGS register!!");
+			return err;
+		}
+	} else if (data->bat.low_battery) {
+		value &= ~RV8803_FLAG_MASK_LOW_VOLTAGE_1;
+		err = i2c_reg_write_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG, value);
+		if (err < 0) {
+			LOG_ERR("Failed to write FLAGS register!!");
+			return err;
+		}
+	}
+
+	return 0;
+}
+#endif
+
 /* RV8803 base init */
 static int rv8803_init(const struct device *dev)
 {
@@ -43,10 +81,18 @@ static int rv8803_init(const struct device *dev)
 
 	k_sleep(K_MSEC(RV8803_STARTUP_TIMING_MS));
 
-#if RV8803_HAS_IRQ || CONFIG_RV8803_DETECT_BATTERY_STATE
+#if RV8803_HAS_IRQ || CONFIG_MFD_RV8803_DETECT_BATTERY_STATE
 	struct rv8803_data *data = dev->data;
 	int err;
 #endif
+
+#if CONFIG_MFD_RV8803_DETECT_BATTERY_STATE
+	err = rv8803_detect_battery_state(dev);
+	if (err < 0) {
+		LOG_ERR("Failed to detect battery state!!");
+		return err;
+	}
+#endif /* CONFIG_RV8803_DETECT_BATTERY_STATE */
 
 #if RV8803_HAS_IRQ
 	if (!gpio_is_ready_dt(&config->gpio->irq_gpio)) {
@@ -83,35 +129,6 @@ static int rv8803_init(const struct device *dev)
 	data->irq->cnt_work.handler = NULL;
 #endif /* RV8803_IRQ_GPIO_USE_COUNTER */
 #endif /* RV8803_HAS_IRQ */
-
-#if CONFIG_RV8803_BATTERY_ENABLE
-	uint8_t value;
-	err = i2c_reg_read_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG, &value);
-	if (err < 0) {
-		LOG_ERR("Failed to read FLAGS register!!");
-		return err;
-	}
-	LOG_DBG("FLAG REGISTER: [0x%02X]",
-		value & (RV8803_FLAG_MASK_LOW_VOLTAGE_1 | RV8803_FLAG_MASK_LOW_VOLTAGE_2));
-	data->bat->power_on_reset = (value & RV8803_FLAG_MASK_LOW_VOLTAGE_2) >> 1;
-	data->bat->low_battery = value & RV8803_FLAG_MASK_LOW_VOLTAGE_1;
-
-	if (data->bat->power_on_reset) {
-		value &= ~RV8803_FLAG_MASK_LOW_VOLTAGE_2;
-		err = i2c_reg_write_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG, value);
-		if (err < 0) {
-			LOG_ERR("Failed to write FLAGS register!!");
-			return err;
-		}
-	} else if (data->bat->low_battery) {
-		value &= ~RV8803_FLAG_MASK_LOW_VOLTAGE_1;
-		err = i2c_reg_write_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG, value);
-		if (err < 0) {
-			LOG_ERR("Failed to write FLAGS register!!");
-			return err;
-		}
-	}
-#endif /* CONFIG_RV8803_DETECT_BATTERY_STATE */
 
 	LOG_INF("RV8803 INIT");
 

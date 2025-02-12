@@ -95,12 +95,12 @@ struct rv8803_config {
 	struct rv8803_config_irq *gpio;
 };
 
+#if CONFIG_MFD_RV8803_DETECT_BATTERY_STATE
 struct rv8803_battery {
-#if CONFIG_RV8803_DETECT_BATTERY_STATE
 	bool power_on_reset;
 	bool low_battery;
-#endif /* CONFIG_RV8803_DETECT_BATTERY_STATE */
 };
+#endif /* CONFIG_MFD_RV8803_DETECT_BATTERY_STATE */
 
 struct rv8803_irq {
 #if RV8803_HAS_IRQ
@@ -118,7 +118,9 @@ struct rv8803_irq {
 
 /* RV8803 Base data */
 struct rv8803_data {
-	struct rv8803_battery *bat;
+#if CONFIG_MFD_RV8803_DETECT_BATTERY_STATE
+	struct rv8803_battery bat;
+#endif
 	struct rv8803_irq *irq;
 };
 
