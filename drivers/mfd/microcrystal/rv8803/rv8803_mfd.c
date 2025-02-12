@@ -135,23 +135,54 @@ static int rv8803_init(const struct device *dev)
 	return 0;
 }
 
-/* Device Initialization MACRO */
-#define RV8803_INIT(n)                                                                             \
-	static struct rv8803_config_irq rv8803_config_irq_##n = {IF_ENABLED(                       \
-		RV8803_HAS_IRQ, (.irq_gpio = GPIO_DT_SPEC_INST_GET_OR(n, irq_gpios, {0}), ))};     \
-	static const struct rv8803_config rv8803_config_##n = {                                    \
-		.i2c_bus = I2C_DT_SPEC_INST_GET(n),                                                \
-		.gpio = &rv8803_config_irq_##n,                                                    \
-	};                                                                                         \
-	IF_ENABLED(CONFIG_RV8803_BATTERY_ENABLE,                                                   \
-		   (static struct rv8803_battery rv8803_battery_##n;))                             \
-	IF_ENABLED(RV8803_HAS_IRQ, (static struct rv8803_irq rv8803_irq_##n;))                     \
-	static struct rv8803_data rv8803_data_##n = {                                              \
-		IF_ENABLED(CONFIG_RV8803_BATTERY_ENABLE, (.bat = &rv8803_battery_##n, ))           \
-			IF_ENABLED(RV8803_HAS_IRQ, (.irq = &rv8803_irq_##n, ))};                   \
-	DEVICE_DT_INST_DEFINE(n, rv8803_init, NULL, &rv8803_data_##n, &rv8803_config_##n,          \
-			      POST_KERNEL, CONFIG_RTC_INIT_PRIORITY, NULL);
+// clang-format off
+#define RV8803_MFD_IRQ_INIT(n) \
+	IF_ENABLED(RV8803_DT_CHILD_HAS_IRQ(n), ( \
+		static struct k_work *rv8803_listener_##n[RV8803_DT_NUM_CHILD_IRQ(n)]; \
+		static struct rv8803_irq rv8803_irq_##n = { \
+			.workers = rv8803_listener_##n, \
+			.workers_index = 0, \
+			.max_workers = ARRAY_SIZE(rv8803_listener_##n), \
+		}; \
+	))
 
-/* Instanciate RV8803 */
-DT_INST_FOREACH_STATUS_OKAY(RV8803_INIT)
+#define RV8803_MFD_CONFIG_INIT(n) \
+	static const struct rv8803_config rv8803_config_##n = { \
+		.i2c_bus = I2C_DT_SPEC_INST_GET(n), \
+		IF_ENABLED(RV8803_DT_CHILD_HAS_IRQ(n), ( \
+			.irq_gpio = GPIO_DT_SPEC_INST_GET_OR(n, irq_gpios, 0), \
+		)) \
+	};
+
+#define RV8803_MFD_DATA_INIT(n) \
+	static struct rv8803_data rv8803_data_##n = { \
+		IF_ENABLED(CONFIG_MFD_RV8803_DETECT_BATTERY_STATE, \
+			(.bat  = { \
+			.power_on_reset = false, \
+			.low_battery = false, \
+		},) \
+		) \
+		COND_CODE_1(RV8803_HAS_IRQ, \
+			(.irq = &rv8803_irq_##n,), \
+			(.irq = NULL,) \
+		) \
+	};
+
+#define RV8803_MFD_STRUCT_CHECK(n) \
+	IF_ENABLED(CONFIG_MFD_RV8803_DETECT_BATTERY_STATE, ( \
+		BUILD_ASSERT(offsetof(struct rv8803_data, bat) == 0, \
+			"ERROR microcrystal,rv8803-mfd rv8803_battery is not first. rv8803_battery must be first in the data structure." \
+		); \
+	))
+
+#define RV8803_MFD_INIT(n) \
+	RV8803_MFD_IRQ_INIT(n) \
+	RV8803_MFD_CONFIG_INIT(n) \
+	RV8803_MFD_DATA_INIT(n) \
+	RV8803_MFD_STRUCT_CHECK(n) \
+	DEVICE_DT_INST_DEFINE(n, rv8803_init, NULL, &rv8803_data_##n, &rv8803_config_##n, \
+			      POST_KERNEL, CONFIG_I2C_INIT_PRIORITY, NULL);
+// clang-format on
+
+DT_INST_FOREACH_STATUS_OKAY(RV8803_MFD_INIT)
 #undef DT_DRV_COMPAT

@@ -102,19 +102,14 @@ struct rv8803_battery {
 };
 #endif /* CONFIG_MFD_RV8803_DETECT_BATTERY_STATE */
 
-struct rv8803_irq {
 #if RV8803_HAS_IRQ
+struct rv8803_irq {
 	struct gpio_callback gpio_cb;
-#if RV8803_IRQ_RTC_IN_USE
-	const struct device *rtc_dev;
-	struct k_work rtc_work;
-#endif /* RV8803_IRQ_RTC_IN_USE */
-#if RV8803_IRQ_CNT_IN_USE
-	const struct device *cnt_dev;
-	struct k_work cnt_work;
-#endif /* RV8803_IRQ_CNT_IN_USE */
-#endif /* RV8803_HAS_IRQ */
+	struct k_work **workers;
+	int workers_index;
+	const int max_workers;
 };
+#endif /* RV8803_HAS_IRQ */
 
 /* RV8803 Base data */
 struct rv8803_data {
