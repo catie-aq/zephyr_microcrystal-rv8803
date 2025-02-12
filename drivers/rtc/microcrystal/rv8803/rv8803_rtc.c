@@ -14,7 +14,6 @@
 
 LOG_MODULE_REGISTER(RV8803_RTC, CONFIG_RTC_LOG_LEVEL);
 
-#if CONFIG_RTC && CONFIG_RV8803_RTC_ENABLE
 /* API */
 static int rv8803_rtc_set_time(const struct device *dev, const struct rtc_time *timeptr)
 {
@@ -413,7 +412,6 @@ static int rv8803_rtc_alarm_set_callback(const struct device *dev, uint16_t id,
 	return 0;
 }
 #endif /* CONFIG_RTC_ALARM */
-#endif
 
 #if RV8803_IRQ_GPIO_USE_UPDATE
 static int rv8803_setup_update_interrupt(const struct device *dev, bool disable)
@@ -480,7 +478,6 @@ static int rv8803_update_set_callback(const struct device *dev, rtc_update_callb
 }
 #endif /* CONFIG_RTC */
 
-#if CONFIG_RTC && CONFIG_RV8803_RTC_ENABLE
 /* RV8803 RTC init */
 static int rv8803_rtc_init(const struct device *dev)
 {
@@ -531,9 +528,7 @@ static const struct rtc_driver_api rv8803_rtc_driver_api = {
 	.update_set_callback = rv8803_update_set_callback,
 #endif
 };
-#endif
 
-#if CONFIG_RTC && CONFIG_RV8803_RTC_ENABLE
 /* RV8803 RTC Initialization MACRO */
 #define RV8803_RTC_INIT(n)                                                                         \
 	static const struct rv8803_rtc_config rv8803_rtc_config_##n = {                            \
@@ -552,10 +547,7 @@ static const struct rtc_driver_api rv8803_rtc_driver_api = {
 	DEVICE_DT_INST_DEFINE(n, rv8803_rtc_init, NULL, &rv8803_rtc_data_##n,                      \
 			      &rv8803_rtc_config_##n, POST_KERNEL, CONFIG_RTC_INIT_PRIORITY,       \
 			      &rv8803_rtc_driver_api);
-#endif
 
-#if CONFIG_RTC && CONFIG_RV8803_RTC_ENABLE
 /* Instanciate RV8803 RTC */
 DT_INST_FOREACH_STATUS_OKAY(RV8803_RTC_INIT)
-#endif
 #undef DT_DRV_COMPAT

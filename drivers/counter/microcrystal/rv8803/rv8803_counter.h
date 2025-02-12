@@ -26,8 +26,6 @@
 #endif
 
 /* Structs */
-#if CONFIG_COUNTER && CONFIG_RV8803_COUNTER_ENABLE
-
 #define RV8803_COUNTER_CHANNELS          1
 #define RV8803_COUNTER_MAX_TOP_VALUE     0x0FFFU
 #define RV8803_COUNTER_FREQUENCY_4096_HZ 0x00
@@ -49,5 +47,4 @@ struct rv8803_cnt_data {
 	counter_top_callback_t counter_cb;
 	void *user_data;
 };
-#endif
 #endif /* ZEPHYR_DRIVERS_RTC_MICROCYSTAL_RV8803_COUNTER_H_ */

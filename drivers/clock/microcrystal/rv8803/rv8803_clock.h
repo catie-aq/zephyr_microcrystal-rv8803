@@ -14,7 +14,6 @@
 #define RV8803_CLK_FREQUENCY_1_HZ     0x02
 
 /* Structs */
-#if CONFIG_CLOCK_CONTROL && CONFIG_RV8803_CLK_ENABLE
 /* RV8803 CLK config */
 struct rv8803_clk_config {
 	const struct device *base_dev; // Parent device reference
@@ -23,5 +22,4 @@ struct rv8803_clk_config {
 /* RV8803 CLK data */
 struct rv8803_clk_data {
 };
-#endif
 #endif /* ZEPHYR_DRIVERS_RTC_MICROCYSTAL_RV8803_CLOCK_H_ */

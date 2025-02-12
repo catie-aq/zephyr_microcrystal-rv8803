@@ -53,7 +53,6 @@
 #define RV8803_DISABLE_UPDATE       (0x00 << 5)
 
 /* Structs */
-#if CONFIG_RTC && CONFIG_RV8803_RTC_ENABLE
 /* RV8803 RTC config */
 struct rv8803_rtc_config {
 	const struct device *base_dev; /* Parent device reference */
@@ -85,6 +84,4 @@ struct rv8803_rtc_data {
 	struct rv8803_rtc_alarm *rtc_alarm;
 	struct rv8803_rtc_update *rtc_update;
 };
-#endif
-
 #endif /* ZEPHYR_DRIVERS_RTC_MICROCYSTAL_RV8803_RTC_H_ */

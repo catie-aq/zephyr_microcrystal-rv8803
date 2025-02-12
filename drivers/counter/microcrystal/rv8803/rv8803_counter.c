@@ -12,7 +12,6 @@
 
 LOG_MODULE_REGISTER(RV8803_CNT, CONFIG_RTC_LOG_LEVEL);
 
-#if CONFIG_COUNTER && CONFIG_RV8803_COUNTER_ENABLE
 static int rv8803_cnt_start(const struct device *dev)
 {
 	const struct rv8803_cnt_config *cnt_config = dev->config;
@@ -237,5 +236,4 @@ static const struct counter_driver_api rv8803_cnt_driver_api = {
 
 /* Instanciate RV8803 CNT */
 DT_INST_FOREACH_STATUS_OKAY(RV8803_CNT_INIT)
-#endif /* CONFIG_COUNTER && CONFIG_RV8803_CNT_ENABLE */
 #undef DT_DRV_COMPAT

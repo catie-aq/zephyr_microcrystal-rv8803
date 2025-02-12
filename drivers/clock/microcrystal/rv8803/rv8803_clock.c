@@ -12,7 +12,6 @@
 
 LOG_MODULE_REGISTER(RV8803_CLK, CONFIG_RTC_LOG_LEVEL);
 
-#if CONFIG_CLOCK_CONTROL && CONFIG_RV8803_CLK_ENABLE
 static int rv8803_clk_on(const struct device *dev, clock_control_subsys_t sys)
 {
 	return -ENOTSUP;
@@ -90,10 +89,6 @@ static int rv8803_clk_get_rate(const struct device *dev, clock_control_subsys_t 
 	return 0;
 }
 
-#endif // CONFIG_CLOCK_CONTROL
-
-#if CONFIG_CLOCK_CONTROL && CONFIG_RV8803_CLK_ENABLE
-/* RV8803 CLK init */
 static int rv8803_clk_init(const struct device *dev)
 {
 	const struct rv8803_clk_config *config = dev->config;
@@ -113,9 +108,7 @@ static const struct clock_control_driver_api rv8803_clk_driver_api = {
 	.set_rate = rv8803_clk_set_rate,
 	.get_rate = rv8803_clk_get_rate,
 };
-#endif
 
-#if CONFIG_CLOCK_CONTROL && CONFIG_RV8803_CLK_ENABLE
 /* RV8803 CLK Initialization MACRO */
 #define RV8803_CLK_INIT(n)                                                                         \
 	static const struct rv8803_clk_config rv8803_clk_config_##n = {                            \
@@ -125,10 +118,6 @@ static const struct clock_control_driver_api rv8803_clk_driver_api = {
 	DEVICE_DT_INST_DEFINE(n, rv8803_clk_init, NULL, &rv8803_clk_data_##n,                      \
 			      &rv8803_clk_config_##n, POST_KERNEL, CONFIG_RTC_INIT_PRIORITY,       \
 			      &rv8803_clk_driver_api);
-#endif
 
-#if CONFIG_CLOCK_CONTROL && CONFIG_RV8803_CLK_ENABLE
-/* Instanciate RV8803 CLK */
 DT_INST_FOREACH_STATUS_OKAY(RV8803_CLK_INIT)
-#endif
 #undef DT_DRV_COMPAT
