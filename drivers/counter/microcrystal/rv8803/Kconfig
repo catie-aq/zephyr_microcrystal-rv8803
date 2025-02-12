@@ -1,0 +1,12 @@
+# RV_8803_C7 driver configuration
+
+# Copyright (c) 2024 CATIE
+# SPDX-License-Identifier: Apache-2.0
+
+menuconfig COUNTER_RV8803
+    bool "RV-8803 peripheral COUNTER"
+    default y
+    depends on DT_HAS_MICROCRYSTAL_RV8803_COUNTER_ENABLED
+    select I2C
+    help
+      Enable driver for MICRO CRYSTAL RV-8803 smt real-time clock module on i2c-bus
