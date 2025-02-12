@@ -16,3 +16,11 @@ properties:
   irq-gpios:
     type: phandle-array
     description: Configures RV-8803 MFD interrupt signal.
+
+child-binding:
+  description: Drivers that uses RV8803.
+
+  properties:
+    use-irq:
+      type: boolean
+      description: Enable RV-8803 interrupt generation.
