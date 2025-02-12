@@ -1,0 +1,23 @@
+# RV_8803_C7 driver configuration
+
+# Copyright (c) 2024 CATIE
+# SPDX-License-Identifier: Apache-2.0
+
+menuconfig MFD_RV8803
+    bool "MFD RV-8803 Device"
+    default y
+    depends on DT_HAS_MICROCRYSTAL_RV8803_ENABLED
+    select I2C
+    help
+      Enable driver for MICRO CRYSTAL RV-8803 smt real-time clock module on i2c-bus
+
+if MFD_RV8803
+
+config MFD_RV8803_DETECT_BATTERY_STATE
+    bool "Enable RTC battery flags"
+    default y
+    depends on RTC_RV8803
+    help
+      Enable flags on battery state of charge
+
+endif
