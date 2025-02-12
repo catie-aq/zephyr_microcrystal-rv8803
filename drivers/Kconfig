@@ -3,6 +3,9 @@
 
 menu "Device Drivers"
 
+rsource "mfd/Kconfig"
 rsource "rtc/Kconfig"
+rsource "counter/Kconfig"
+rsource "clock/Kconfig"
 
 endmenu
