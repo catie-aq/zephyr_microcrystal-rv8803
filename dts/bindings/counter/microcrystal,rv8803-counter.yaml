@@ -13,13 +13,13 @@ on-bus: rv8803
 properties:
 # Zephyr do not support values < 1Hz
   frequency:
-    type: string
+    type: int
     required: true
     description: Configures RV-8803 counter frequency (Hz).
     enum:
-      - "4096"
-      - "64"
-      - "1"
+      - 4096
+      - 64
+      - 1
 
   use-irq:
     type: boolean

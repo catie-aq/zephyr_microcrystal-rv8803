@@ -27,42 +27,41 @@ static int rv8803_clk_set_rate(const struct device *dev, clock_control_subsys_t 
 {
 	ARG_UNUSED(sys);
 	const struct rv8803_clk_config *clk_config = dev->config;
-	const struct rv8803_config *config = clk_config->base_dev->config;
 	uint8_t reg;
 	int err;
 
-	err = i2c_reg_read_byte_dt(&config->i2c_bus, RV8803_REGISTER_EXTENSION, &reg);
+	err = rv8803_bus_reg_read_byte(clk_config->mfd_dev, RV8803_REGISTER_EXTENSION, &reg);
 	if (err < 0) {
 		return err;
 	}
 
 	uintptr_t u_rate = (uintptr_t)rate;
-	if ((reg & RV8803_CLK_FREQUENCY_MASK) == (u_rate << RV8803_CLK_FREQUENCY_SHIFT)) {
+	if ((reg & RV8803_CLOCK_FREQUENCY_MASK) == (u_rate << RV8803_CLOCK_FREQUENCY_SHIFT)) {
 		return -EALREADY;
 	}
 
-	reg &= ~RV8803_CLK_FREQUENCY_MASK;
+	reg &= ~RV8803_CLOCK_FREQUENCY_MASK;
 	switch (u_rate) {
-	case RV8803_CLK_FREQUENCY_32768_HZ:
-		reg |= (RV8803_CLK_FREQUENCY_32768_HZ << RV8803_CLK_FREQUENCY_SHIFT) &
-		       RV8803_CLK_FREQUENCY_MASK;
+	case RV8803_CLOCK_FREQUENCY_32768_HZ:
+		reg |= (RV8803_CLOCK_FREQUENCY_32768_HZ << RV8803_CLOCK_FREQUENCY_SHIFT) &
+		       RV8803_CLOCK_FREQUENCY_MASK;
 		break;
 
-	case RV8803_CLK_FREQUENCY_1024_HZ:
-		reg |= (RV8803_CLK_FREQUENCY_1024_HZ << RV8803_CLK_FREQUENCY_SHIFT) &
-		       RV8803_CLK_FREQUENCY_MASK;
+	case RV8803_CLOCK_FREQUENCY_1024_HZ:
+		reg |= (RV8803_CLOCK_FREQUENCY_1024_HZ << RV8803_CLOCK_FREQUENCY_SHIFT) &
+		       RV8803_CLOCK_FREQUENCY_MASK;
 		break;
 
-	case RV8803_CLK_FREQUENCY_1_HZ:
-		reg |= (RV8803_CLK_FREQUENCY_1_HZ << RV8803_CLK_FREQUENCY_SHIFT) &
-		       RV8803_CLK_FREQUENCY_MASK;
+	case RV8803_CLOCK_FREQUENCY_1_HZ:
+		reg |= (RV8803_CLOCK_FREQUENCY_1_HZ << RV8803_CLOCK_FREQUENCY_SHIFT) &
+		       RV8803_CLOCK_FREQUENCY_MASK;
 		break;
 
 	default:
 		return -ENOTSUP;
 	}
 
-	err = i2c_reg_write_byte_dt(&config->i2c_bus, RV8803_REGISTER_EXTENSION, reg);
+	err = rv8803_bus_reg_write_byte(clk_config->mfd_dev, RV8803_REGISTER_EXTENSION, reg);
 	if (err < 0) {
 		return err;
 	}
@@ -74,17 +73,16 @@ static int rv8803_clk_get_rate(const struct device *dev, clock_control_subsys_t 
 {
 	ARG_UNUSED(sys);
 	const struct rv8803_clk_config *clk_config = dev->config;
-	const struct rv8803_config *config = clk_config->base_dev->config;
 	uint8_t reg;
 	int err;
 
-	err = i2c_reg_read_byte_dt(&config->i2c_bus, RV8803_REGISTER_EXTENSION, &reg);
+	err = rv8803_bus_reg_read_byte(clk_config->mfd_dev, RV8803_REGISTER_EXTENSION, &reg);
 	if (err < 0) {
 		return err;
 	}
 
-	reg = reg & RV8803_CLK_FREQUENCY_MASK;
-	*rate = reg >> RV8803_CLK_FREQUENCY_SHIFT;
+	reg = reg & RV8803_CLOCK_FREQUENCY_MASK;
+	*rate = reg >> RV8803_CLOCK_FREQUENCY_SHIFT;
 
 	return 0;
 }
@@ -93,7 +91,7 @@ static int rv8803_clk_init(const struct device *dev)
 {
 	const struct rv8803_clk_config *config = dev->config;
 
-	if (!device_is_ready(config->base_dev)) {
+	if (!device_is_ready(config->mfd_dev)) {
 		return -ENODEV;
 	}
 	LOG_INF("RV8803 CLK INIT");
@@ -109,12 +107,16 @@ static const struct clock_control_driver_api rv8803_clk_driver_api = {
 	.get_rate = rv8803_clk_get_rate,
 };
 
-/* RV8803 CLK Initialization MACRO */
-#define RV8803_CLK_INIT(n)                                                                         \
+#define RV8803_CLOCK_CONFIG_INIT(n)                                                                \
 	static const struct rv8803_clk_config rv8803_clk_config_##n = {                            \
-		.base_dev = DEVICE_DT_GET(DT_PARENT(DT_INST(n, DT_DRV_COMPAT))),                   \
-	};                                                                                         \
-	static struct rv8803_clk_data rv8803_clk_data_##n;                                         \
+		.mfd_dev = DEVICE_DT_GET(DT_PARENT(DT_DRV_INST(n))),                               \
+	};
+
+#define RV8803_CLOCK_DATA_INIT(n) static struct rv8803_clk_data rv8803_clk_data_##n;
+
+#define RV8803_CLK_INIT(n)                                                                         \
+	RV8803_CLOCK_CONFIG_INIT(n)                                                                \
+	RV8803_CLOCK_DATA_INIT(n)                                                                  \
 	DEVICE_DT_INST_DEFINE(n, rv8803_clk_init, NULL, &rv8803_clk_data_##n,                      \
 			      &rv8803_clk_config_##n, POST_KERNEL, CONFIG_RTC_INIT_PRIORITY,       \
 			      &rv8803_clk_driver_api);
