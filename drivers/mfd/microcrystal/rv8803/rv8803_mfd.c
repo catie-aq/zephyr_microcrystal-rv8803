@@ -9,7 +9,96 @@
 #define DT_DRV_COMPAT microcrystal_rv8803
 #include "rv8803_mfd.h"
 
+LOG_MODULE_REGISTER(RV8803, CONFIG_MFD_LOG_LEVEL);
+
+int rv8803_bus_reg_read_byte(const struct device *dev, uint8_t reg_addr, uint8_t *value)
+{
+	const struct rv8803_config *config = dev->config;
+
+	int err = i2c_reg_read_byte_dt(&config->i2c_bus, reg_addr, value);
+	if (err < 0) {
+		LOG_ERR("[ERROR]: Register read byte [0x%02X]", reg_addr);
+	}
+
+	return err;
+}
+
+int rv8803_bus_reg_write_byte(const struct device *dev, uint8_t reg_addr, uint8_t value)
+{
+	const struct rv8803_config *config = dev->config;
+
+	int err = i2c_reg_write_byte_dt(&config->i2c_bus, reg_addr, value);
+	if (err < 0) {
+		LOG_ERR("[ERROR]: Register write byte [0x%02X]", reg_addr);
+	}
+
+	return err;
+}
+
+int rv8803_bus_reg_update_byte(const struct device *dev, uint8_t reg_addr, uint8_t mask,
+			       uint8_t value)
+{
+	const struct rv8803_config *config = dev->config;
+
+	int err = i2c_reg_update_byte_dt(&config->i2c_bus, reg_addr, mask, value);
+	if (err < 0) {
+		LOG_ERR("[ERROR]: Register update byte [0x%02X]", reg_addr);
+	}
+
+	return err;
+}
+
+int rv8803_bus_burst_read(const struct device *dev, uint8_t start_addr, uint8_t *buf,
+			  uint32_t num_bytes)
+{
+	const struct rv8803_config *config = dev->config;
+
+	int err = i2c_burst_read_dt(&config->i2c_bus, start_addr, buf, num_bytes);
+	if (err < 0) {
+		LOG_ERR("[ERROR]: Register burst read [0x%02X]-[0x%02X]", start_addr,
+			start_addr + num_bytes);
+	}
+
+	return err;
+}
+
+int rv8803_bus_burst_write(const struct device *dev, uint8_t start_addr, const uint8_t *buf,
+			   uint32_t num_bytes)
+{
+	const struct rv8803_config *config = dev->config;
+
+	int err = i2c_burst_write_dt(&config->i2c_bus, start_addr, buf, num_bytes);
+	if (err < 0) {
+		LOG_ERR("[ERROR]: Register burst write [0x%02X]-[0x%02X]", start_addr,
+			start_addr + num_bytes);
+	}
+
+	return err;
+}
+
 #if RV8803_HAS_IRQ
+bool rv8803_irq_gpio_is_available(const struct device *dev)
+{
+	const struct rv8803_config *config = dev->config;
+	return gpio_is_ready_dt(&config->irq_gpio);
+}
+
+int rv8803_append_irq_listener(const struct device *dev, struct k_work *worker)
+{
+	struct rv8803_data *data = dev->data;
+
+	if (data->irq->workers_index >= data->irq->max_workers) {
+		LOG_ERR("Listner array is full! [%d]", data->irq->max_workers);
+		return -ENOSR;
+	}
+
+	LOG_INF("INDEX: [%d][%d]", data->irq->workers_index, data->irq->max_workers);
+	data->irq->workers[data->irq->workers_index] = worker;
+	data->irq->workers_index++;
+
+	return 0;
+}
+
 static void rv8803_gpio_callback_handler(const struct device *p_port, struct gpio_callback *p_cb,
 					 gpio_port_pins_t pins)
 {
@@ -23,6 +112,16 @@ static void rv8803_gpio_callback_handler(const struct device *p_port, struct gpi
 			k_work_submit(data->workers[i]);
 		}
 	}
+}
+#else
+bool rv8803_irq_gpio_is_available(const struct device *dev)
+{
+	return false;
+}
+
+int rv8803_append_irq_listener(const struct device *dev, struct k_work *worker)
+{
+	return -ENOTSUP;
 }
 #endif /* RV8803_HAS_IRQ */
 

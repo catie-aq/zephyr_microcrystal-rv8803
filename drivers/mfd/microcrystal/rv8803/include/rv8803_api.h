@@ -56,6 +56,18 @@
 #define RV8803_HAS_IRQ 0
 #endif
 
+int rv8803_bus_reg_read_byte(const struct device *dev, uint8_t reg_addr, uint8_t *value);
+int rv8803_bus_reg_write_byte(const struct device *dev, uint8_t reg_addr, uint8_t value);
+int rv8803_bus_reg_update_byte(const struct device *dev, uint8_t reg_addr, uint8_t mask,
+			       uint8_t value);
+int rv8803_bus_burst_read(const struct device *dev, uint8_t start_addr, uint8_t *buf,
+			  uint32_t num_bytes);
+int rv8803_bus_burst_write(const struct device *dev, uint8_t start_addr, const uint8_t *buf,
+			   uint32_t num_bytes);
+
+bool rv8803_irq_gpio_is_available(const struct device *dev);
+int rv8803_append_irq_listener(const struct device *dev, struct k_work *worker);
+
 #if CONFIG_MFD_RV8803_DETECT_BATTERY_STATE
 struct rv8803_battery {
 	bool power_on_reset;
