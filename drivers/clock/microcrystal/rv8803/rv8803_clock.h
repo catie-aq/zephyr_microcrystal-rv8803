@@ -16,7 +16,7 @@
 /* Structs */
 /* RV8803 CLK config */
 struct rv8803_clk_config {
-	const struct device *base_dev; // Parent device reference
+	const struct device *mfd_dev;
 };
 
 /* RV8803 CLK data */
