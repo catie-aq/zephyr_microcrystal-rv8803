@@ -51,18 +51,14 @@
  * Each mask represents a specific feature or interrupt that can be enabled or
  * disabled in the control register.
  */
-// clang-format off
-#define RV8803_CONTROL_MASK_UPDATE   (0x01 << 5)
-#define RV8803_CONTROL_MASK_COUNTER  (0x01 << 4)
-#define RV8803_CONTROL_MASK_ALARM    (0x01 << 3)
-#define RV8803_CONTROL_MASK_EXTERN   (0x01 << 2)
-#define RV8803_CONTROL_MASK_INTERRUPT ( \
-				RV8803_CONTROL_MASK_UPDATE | \
-				RV8803_CONTROL_MASK_COUNTER | \
-				RV8803_CONTROL_MASK_ALARM | \
-				RV8803_CONTROL_MASK_EXTERN)
-#define RV8803_DISABLE_INTERRUPT     (0x00)
-// clang-format on
+#define RV8803_CONTROL_MASK_UPDATE  (0x01 << 5)
+#define RV8803_CONTROL_MASK_COUNTER (0x01 << 4)
+#define RV8803_CONTROL_MASK_ALARM   (0x01 << 3)
+#define RV8803_CONTROL_MASK_EXTERN  (0x01 << 2)
+#define RV8803_CONTROL_MASK_INTERRUPT                                                              \
+	(RV8803_CONTROL_MASK_UPDATE | RV8803_CONTROL_MASK_COUNTER | RV8803_CONTROL_MASK_ALARM |    \
+	 RV8803_CONTROL_MASK_EXTERN)
+#define RV8803_DISABLE_INTERRUPT (0x00)
 
 /**
  * @brief Extension Register Masks for RV8803
@@ -85,7 +81,6 @@
 #define RV8803_FLAG_MASK_COUNTER (0x01 << 4)
 #define RV8803_FLAG_MASK_UPDATE  (0x01 << 5)
 
-// clang-format off
 /**
  * @brief Generate a macro to count the number of children of a given instance
  * that have a given property.
@@ -116,7 +111,8 @@
  * @return The number of children of the given instance that have the given
  * property.
  */
-#define RV8803_DT_CHILD_CNT_BOOL_STATUS_OKAY(inst, prop) DT_INST_FOREACH_CHILD_STATUS_OKAY_VARGS(inst, RV8803_DT_CNT_BOOL, prop) +
+#define RV8803_DT_CHILD_CNT_BOOL_STATUS_OKAY(inst, prop)                                           \
+	DT_INST_FOREACH_CHILD_STATUS_OKAY_VARGS(inst, RV8803_DT_CNT_BOOL, prop) +
 
 /**
  * @brief Generate a macro to count the number of children of any instance
@@ -130,8 +126,8 @@
  *
  * @return The number of children of any instance that have the given property.
  */
-#define RV8803_DT_ANY_INST_CHILD_CNT_BOOL_STATUS_OKAY(prop) DT_INST_FOREACH_STATUS_OKAY_VARGS(RV8803_DT_CHILD_CNT_BOOL_STATUS_OKAY, prop) 0
-// clang-format on
+#define RV8803_DT_ANY_INST_CHILD_CNT_BOOL_STATUS_OKAY(prop)                                        \
+	DT_INST_FOREACH_STATUS_OKAY_VARGS(RV8803_DT_CHILD_CNT_BOOL_STATUS_OKAY, prop) 0
 
 /**
  * @brief Check if any instance of the RV8803 MFD has the use-irq property

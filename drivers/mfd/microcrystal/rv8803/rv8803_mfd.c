@@ -383,7 +383,6 @@ static int rv8803_init(const struct device *dev)
 	return 0;
 }
 
-// clang-format off
 /**
  * @brief Macro to initialize the rv8803_battery struct
  *
@@ -394,15 +393,14 @@ static int rv8803_init(const struct device *dev)
  *
  * @param n The instance number
  */
-#define RV8803_MFD_IRQ_INIT(n) \
-	IF_ENABLED(RV8803_DT_CHILD_HAS_IRQ(n), ( \
-		static struct k_work *rv8803_listener_##n[RV8803_DT_NUM_CHILD_IRQ(n)]; \
-		static struct rv8803_irq rv8803_irq_##n = { \
-			.workers = rv8803_listener_##n, \
-			.workers_index = 0, \
-			.max_workers = ARRAY_SIZE(rv8803_listener_##n), \
-		}; \
-	))
+#define RV8803_MFD_IRQ_INIT(n)                                                                     \
+	IF_ENABLED(RV8803_DT_CHILD_HAS_IRQ(n),                                                     \
+		   (static struct k_work * rv8803_listener_##n[RV8803_DT_NUM_CHILD_IRQ(n)];        \
+		    static struct rv8803_irq rv8803_irq_##n = {                                    \
+			    .workers = rv8803_listener_##n,                                        \
+			    .workers_index = 0,                                                    \
+			    .max_workers = ARRAY_SIZE(rv8803_listener_##n),                        \
+		    };))
 
 /**
  * @brief Macro to initialize the rv8803_config struct
@@ -413,13 +411,11 @@ static int rv8803_init(const struct device *dev)
  *
  * @param n The instance number
  */
-#define RV8803_MFD_CONFIG_INIT(n) \
-	static const struct rv8803_config rv8803_config_##n = { \
-		.i2c_bus = I2C_DT_SPEC_INST_GET(n), \
-		IF_ENABLED(RV8803_DT_CHILD_HAS_IRQ(n), ( \
-			.irq_gpio = GPIO_DT_SPEC_INST_GET_OR(n, irq_gpios, 0), \
-		)) \
-	};
+#define RV8803_MFD_CONFIG_INIT(n)                                                                  \
+	static const struct rv8803_config rv8803_config_##n = {                                    \
+		.i2c_bus = I2C_DT_SPEC_INST_GET(n),                                                \
+		IF_ENABLED(RV8803_DT_CHILD_HAS_IRQ(n),                                             \
+			   (.irq_gpio = GPIO_DT_SPEC_INST_GET_OR(n, irq_gpios, 0), ))};
 
 /**
  * @brief Macro to initialize the rv8803_data struct
@@ -431,19 +427,13 @@ static int rv8803_init(const struct device *dev)
  *
  * @param n The instance number
  */
-#define RV8803_MFD_DATA_INIT(n) \
-	static struct rv8803_data rv8803_data_##n = { \
-		IF_ENABLED(CONFIG_MFD_RV8803_DETECT_BATTERY_STATE, \
-			(.bat  = { \
-			.power_on_reset = false, \
-			.low_battery = false, \
-		},) \
-		) \
-		COND_CODE_1(RV8803_HAS_IRQ, \
-			(.irq = &rv8803_irq_##n,), \
-			(.irq = NULL,) \
-		) \
-	};
+#define RV8803_MFD_DATA_INIT(n)                                                                    \
+	static struct rv8803_data rv8803_data_##n = {IF_ENABLED(                                   \
+		CONFIG_MFD_RV8803_DETECT_BATTERY_STATE,                                            \
+		(.bat = {                                                                          \
+			 .power_on_reset = false,                                                  \
+			 .low_battery = false,                                                     \
+		 }, )) COND_CODE_1(RV8803_HAS_IRQ, (.irq = &rv8803_irq_##n, ), (.irq = NULL, ))};
 
 /**
  * @brief Macro to check that rv8803_battery is first in the rv8803_data struct
@@ -454,12 +444,11 @@ static int rv8803_init(const struct device *dev)
  *
  * @param n The instance number
  */
-#define RV8803_MFD_STRUCT_CHECK(n) \
-	IF_ENABLED(CONFIG_MFD_RV8803_DETECT_BATTERY_STATE, ( \
-		BUILD_ASSERT(offsetof(struct rv8803_data, bat) == 0, \
-			"ERROR microcrystal,rv8803-mfd rv8803_battery is not first. rv8803_battery must be first in the data structure." \
-		); \
-	))
+#define RV8803_MFD_STRUCT_CHECK(n)                                                                 \
+	IF_ENABLED(CONFIG_MFD_RV8803_DETECT_BATTERY_STATE,                                         \
+		   (BUILD_ASSERT(offsetof(struct rv8803_data, bat) == 0,                           \
+				 "ERROR microcrystal,rv8803-mfd rv8803_battery is not first. "     \
+				 "rv8803_battery must be first in the data structure.");))
 
 /**
  * @brief Macro to generate the RV8803 MFD instance
@@ -469,14 +458,13 @@ static int rv8803_init(const struct device *dev)
  *
  * @param n The instance number
  */
-#define RV8803_MFD_INIT(n) \
-	RV8803_MFD_IRQ_INIT(n) \
-	RV8803_MFD_CONFIG_INIT(n) \
-	RV8803_MFD_DATA_INIT(n) \
-	RV8803_MFD_STRUCT_CHECK(n) \
-	DEVICE_DT_INST_DEFINE(n, rv8803_init, NULL, &rv8803_data_##n, &rv8803_config_##n, \
+#define RV8803_MFD_INIT(n)                                                                         \
+	RV8803_MFD_IRQ_INIT(n)                                                                     \
+	RV8803_MFD_CONFIG_INIT(n)                                                                  \
+	RV8803_MFD_DATA_INIT(n)                                                                    \
+	RV8803_MFD_STRUCT_CHECK(n)                                                                 \
+	DEVICE_DT_INST_DEFINE(n, rv8803_init, NULL, &rv8803_data_##n, &rv8803_config_##n,          \
 			      POST_KERNEL, CONFIG_I2C_INIT_PRIORITY, NULL);
-// clang-format on
 
 /**
  * @brief Generate the RV8803 MFD instances.
