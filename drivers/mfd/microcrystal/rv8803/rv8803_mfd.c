@@ -15,6 +15,13 @@ LOG_MODULE_REGISTER(RV8803, CONFIG_MFD_LOG_LEVEL);
 K_THREAD_STACK_DEFINE(rv8803_work_queue_stack, CONFIG_MFD_RV8803_WORKQUEUE_SIZE);
 static struct k_work_q rv8803_work_queue;
 
+/**
+ * @brief Initializes the RV8803 work queue
+ *
+ * Initializes the work queue that handles RV8803 interrupts.
+ *
+ * @retval 0 on success
+ */
 static int rv8803_workqueue_init(void)
 {
 	k_work_queue_init(&rv8803_work_queue);
@@ -25,6 +32,7 @@ static int rv8803_workqueue_init(void)
 	return 0;
 }
 
+/* The work-queue is shared across all instances, hence we initialize it separatedly */
 SYS_INIT(rv8803_workqueue_init, POST_KERNEL, CONFIG_I2C_INIT_PRIORITY);
 #endif
 
@@ -40,6 +48,16 @@ int rv8803_bus_reg_read_byte(const struct device *dev, uint8_t reg_addr, uint8_t
 	return err;
 }
 
+/**
+ * @brief Write a byte to the RV8803 register
+ *
+ * @param dev RV8803 device structure
+ * @param reg_addr Register address
+ * @param value Value to write
+ *
+ * @retval 0 on success
+ * @retval negative errno code on failure
+ */
 int rv8803_bus_reg_write_byte(const struct device *dev, uint8_t reg_addr, uint8_t value)
 {
 	const struct rv8803_config *config = dev->config;
@@ -52,6 +70,17 @@ int rv8803_bus_reg_write_byte(const struct device *dev, uint8_t reg_addr, uint8_
 	return err;
 }
 
+/**
+ * @brief Update a byte in the RV8803 register
+ *
+ * @param dev RV8803 device structure
+ * @param reg_addr Register address
+ * @param mask Mask of bits to update
+ * @param value Value to write
+ *
+ * @retval 0 on success
+ * @retval negative errno code on failure
+ */
 int rv8803_bus_reg_update_byte(const struct device *dev, uint8_t reg_addr, uint8_t mask,
 			       uint8_t value)
 {
@@ -65,6 +94,17 @@ int rv8803_bus_reg_update_byte(const struct device *dev, uint8_t reg_addr, uint8
 	return err;
 }
 
+/**
+ * @brief Perform a burst read from the RV8803 registers
+ *
+ * @param dev RV8803 device structure
+ * @param start_addr Starting register address for the burst read
+ * @param buf Buffer to store the read data
+ * @param num_bytes Number of bytes to read
+ *
+ * @retval 0 on success
+ * @retval negative errno code on failure
+ */
 int rv8803_bus_burst_read(const struct device *dev, uint8_t start_addr, uint8_t *buf,
 			  uint32_t num_bytes)
 {
@@ -79,6 +119,17 @@ int rv8803_bus_burst_read(const struct device *dev, uint8_t start_addr, uint8_t 
 	return err;
 }
 
+/**
+ * @brief Perform a burst write from the RV8803 registers
+ *
+ * @param dev RV8803 device structure
+ * @param start_addr Starting register address for the burst write
+ * @param buf Buffer to store the written data
+ * @param num_bytes Number of bytes to write
+ *
+ * @retval 0 on success
+ * @retval negative errno code on failure
+ */
 int rv8803_bus_burst_write(const struct device *dev, uint8_t start_addr, const uint8_t *buf,
 			   uint32_t num_bytes)
 {
@@ -94,12 +145,34 @@ int rv8803_bus_burst_write(const struct device *dev, uint8_t start_addr, const u
 }
 
 #if RV8803_HAS_IRQ
+/**
+ * @brief Check if the IRQ GPIO is available.
+ *
+ * This function checks if the IRQ GPIO is available and ready for use.
+ *
+ * @param dev Pointer to the RV8803 device structure.
+ *
+ * @return true if the IRQ GPIO is available, false otherwise.
+ */
 bool rv8803_irq_gpio_is_available(const struct device *dev)
 {
 	const struct rv8803_config *config = dev->config;
 	return gpio_is_ready_dt(&config->irq_gpio);
 }
 
+/**
+ * @brief Append an IRQ listener to the RV8803 device.
+ *
+ * Adds a new work item to the IRQ listener array for the RV8803 device.
+ * Ensures that the listener array is not full before appending the new listener.
+ * If the array is full, an error code is returned.
+ *
+ * @param dev Pointer to the RV8803 device structure.
+ * @param worker Pointer to the work item to be appended as an IRQ listener.
+ *
+ * @retval 0 on success.
+ * @retval -ENOSR if the listener array is full.
+ */
 int rv8803_append_irq_listener(const struct device *dev, struct k_work *worker)
 {
 	struct rv8803_data *data = dev->data;
@@ -116,6 +189,16 @@ int rv8803_append_irq_listener(const struct device *dev, struct k_work *worker)
 	return 0;
 }
 
+/**
+ * @brief Handle the GPIO interrupt callback.
+ *
+ * This function is called when a GPIO interrupt occurs. It iterates over the
+ * list of registered workers and submits them to be executed.
+ *
+ * @param p_port Pointer to the GPIO device that triggered the interrupt.
+ * @param p_cb Pointer to the GPIO callback structure.
+ * @param pins Bitmask of pins that triggered the interrupt.
+ */
 static void rv8803_gpio_callback_handler(const struct device *p_port, struct gpio_callback *p_cb,
 					 gpio_port_pins_t pins)
 {
@@ -135,11 +218,31 @@ static void rv8803_gpio_callback_handler(const struct device *p_port, struct gpi
 	}
 }
 #else
+/**
+ * @brief Check if the GPIO interrupt is available.
+ *
+ * This function checks if the GPIO interrupt is available for the given device.
+ *
+ * @param dev Pointer to the device structure.
+ *
+ * @returns true if the GPIO interrupt is available, false otherwise.
+ */
 bool rv8803_irq_gpio_is_available(const struct device *dev)
 {
 	return false;
 }
 
+/**
+ * @brief Appends a worker to the list of IRQ listeners.
+ *
+ * This function appends a worker to the list of IRQ listeners for the given
+ * device. The worker will be executed when the GPIO interrupt is triggered.
+ *
+ * @param dev Pointer to the device structure.
+ * @param worker Pointer to the worker to append.
+ *
+ * @returns -ENOTSUP if the GPIO interrupt is not available.
+ */
 int rv8803_append_irq_listener(const struct device *dev, struct k_work *worker)
 {
 	return -ENOTSUP;
@@ -147,6 +250,19 @@ int rv8803_append_irq_listener(const struct device *dev, struct k_work *worker)
 #endif /* RV8803_HAS_IRQ */
 
 #if CONFIG_MFD_RV8803_DETECT_BATTERY_STATE
+/**
+ * @brief Detects the battery state of the RV8803 device.
+ *
+ * This function reads the FLAGS register of the RV8803 device to determine
+ * the battery state. It checks for power-on reset and low battery conditions
+ * and updates the device's battery status accordingly. If a power-on reset or
+ * low battery condition is detected, the corresponding flag in the FLAGS
+ * register is cleared.
+ *
+ * @param dev Pointer to the device structure for the driver instance.
+ *
+ * @return 0 on success, negative error code on failure.
+ */
 static int rv8803_detect_battery_state(const struct device *dev)
 {
 	const struct rv8803_config *config = dev->config;
@@ -184,7 +300,24 @@ static int rv8803_detect_battery_state(const struct device *dev)
 }
 #endif
 
-/* RV8803 base init */
+/**
+ * @brief Initialize the RV8803 device.
+ *
+ * This function initializes the RV8803 device by:
+ *  1. Checking if the I2C bus is ready.
+ *  2. Sleeping for the startup timing.
+ *  3. Disabling interrupts by setting the control register.
+ *  4. Configuring the IRQ GPIO pin if interrupts are enabled.
+ *  5. Detecting the battery state if the feature is enabled.
+ *
+ * @param dev Pointer to the device structure for the driver instance.
+ *
+ * @retval 0 on success
+ * @retval -ENODEV if the I2C bus is not ready
+ * @retval -EINVAL if the configuration is invalid
+ * @retval -EIO if an I/O error occurs
+ * @retval negative errno code on failure
+ */
 static int rv8803_init(const struct device *dev)
 {
 	const struct rv8803_config *config = dev->config;
@@ -251,6 +384,16 @@ static int rv8803_init(const struct device *dev)
 }
 
 // clang-format off
+/**
+ * @brief Macro to initialize the rv8803_battery struct
+ *
+ * This macro initializes the rv8803_battery struct which contains the
+ * power-on reset and low battery status of the RV8803 device. It is
+ * used when the CONFIG_MFD_RV8803_DETECT_BATTERY_STATE option is
+ * enabled.
+ *
+ * @param n The instance number
+ */
 #define RV8803_MFD_IRQ_INIT(n) \
 	IF_ENABLED(RV8803_DT_CHILD_HAS_IRQ(n), ( \
 		static struct k_work *rv8803_listener_##n[RV8803_DT_NUM_CHILD_IRQ(n)]; \
@@ -261,6 +404,15 @@ static int rv8803_init(const struct device *dev)
 		}; \
 	))
 
+/**
+ * @brief Macro to initialize the rv8803_config struct
+ *
+ * This macro initializes the rv8803_config struct which contains the
+ * I2C bus and the IRQ GPIO pin of the RV8803 device. It is used when
+ * the RV8803_HAS_IRQ option is enabled.
+ *
+ * @param n The instance number
+ */
 #define RV8803_MFD_CONFIG_INIT(n) \
 	static const struct rv8803_config rv8803_config_##n = { \
 		.i2c_bus = I2C_DT_SPEC_INST_GET(n), \
@@ -269,6 +421,16 @@ static int rv8803_init(const struct device *dev)
 		)) \
 	};
 
+/**
+ * @brief Macro to initialize the rv8803_data struct
+ *
+ * This macro initializes the rv8803_data struct with pointers to the
+ * rv8803_battery and rv8803_irq structs based on the configuration
+ * options. The pointers are set to NULL if the corresponding features
+ * are not enabled in the configuration.
+ *
+ * @param n The instance number
+ */
 #define RV8803_MFD_DATA_INIT(n) \
 	static struct rv8803_data rv8803_data_##n = { \
 		IF_ENABLED(CONFIG_MFD_RV8803_DETECT_BATTERY_STATE, \
@@ -283,6 +445,15 @@ static int rv8803_init(const struct device *dev)
 		) \
 	};
 
+/**
+ * @brief Macro to check that rv8803_battery is first in the rv8803_data struct
+ *
+ * This macro checks that the rv8803_battery struct is the first member of
+ * the rv8803_data struct. This is required because we access the
+ * rv8803_battery struct without a pointer in some places.
+ *
+ * @param n The instance number
+ */
 #define RV8803_MFD_STRUCT_CHECK(n) \
 	IF_ENABLED(CONFIG_MFD_RV8803_DETECT_BATTERY_STATE, ( \
 		BUILD_ASSERT(offsetof(struct rv8803_data, bat) == 0, \
@@ -290,6 +461,14 @@ static int rv8803_init(const struct device *dev)
 		); \
 	))
 
+/**
+ * @brief Macro to generate the RV8803 MFD instance
+ *
+ * This macro generates the rv8803_config, rv8803_data, and rv8803_irq structs
+ * for the given instance and registers the device with the kernel.
+ *
+ * @param n The instance number
+ */
 #define RV8803_MFD_INIT(n) \
 	RV8803_MFD_IRQ_INIT(n) \
 	RV8803_MFD_CONFIG_INIT(n) \
@@ -299,5 +478,19 @@ static int rv8803_init(const struct device *dev)
 			      POST_KERNEL, CONFIG_I2C_INIT_PRIORITY, NULL);
 // clang-format on
 
+/**
+ * @brief Generate the RV8803 MFD instances.
+ *
+ * This macro iterates over all compatible instances of the RV8803 MFD in the
+ * Devicetree and initializes them. For each instance, it sets up the
+ * configuration, data, and IRQ structures, and registers the device with the
+ * kernel.
+ *
+ * @details The macro DT_INST_FOREACH_STATUS_OKAY is used to iterate over all
+ * instances of the RV8803 MFD in the Devicetree. For each instance,
+ * the RV8803_MFD_INIT macro is called to perform the necessary initialization
+ * steps, including setting up the I2C bus, IRQ GPIO, and battery state
+ * detection if enabled.
+ */
 DT_INST_FOREACH_STATUS_OKAY(RV8803_MFD_INIT)
 #undef DT_DRV_COMPAT
