@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <zephyr/drivers/clock_control.h>
 #include <zephyr/logging/log.h>
 
 #include "rv8803_api.h"

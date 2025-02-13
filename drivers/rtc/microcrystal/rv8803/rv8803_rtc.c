@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <zephyr/drivers/rtc.h>
 #include <zephyr/sys/util.h>
 #include <zephyr/logging/log.h>
 
