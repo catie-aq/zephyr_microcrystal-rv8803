@@ -25,11 +25,14 @@
 
 		rv88030_rtc: rv8803-rtc {
 			compatible = "microcrystal,rv8803-rtc";
+			use-irq;
+			alarm = "poll";
+			update = "irq";
 		};
 
 		rv88030_counter: rv8803-counter {
 			compatible = "microcrystal,rv8803-counter";
-			frequency = "1";
+			frequency = <1>;
 		};
 
 		rv88030_clock: rv8803-clock {
