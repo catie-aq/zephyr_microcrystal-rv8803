@@ -18,16 +18,11 @@ static void rv8803_gpio_callback_handler(const struct device *p_port, struct gpi
 
 	struct rv8803_irq *data = CONTAINER_OF(p_cb, struct rv8803_irq, gpio_cb);
 
-#if defined(RV8803_IRQ_RTC_IN_USE)
-	if (data->rtc_work.handler != NULL) {
-		k_work_submit(&data->rtc_work); /* Using work queue to exit isr context */
+	for (int i = 0; i < data->workers_index; i++) {
+		if (data->workers[i] != NULL) {
+			k_work_submit(data->workers[i]);
+		}
 	}
-#endif /* RV8803_IRQ_RTC_IN_USE */
-#if defined(RV8803_IRQ_GPIO_USE_COUNTER)
-	if (data->cnt_work.handler != NULL) {
-		k_work_submit(&data->cnt_work); /* Using work queue to exit isr context */
-	}
-#endif /* RV8803_IRQ_GPIO_USE_COUNTER */
 }
 #endif /* RV8803_HAS_IRQ */
 
@@ -81,10 +76,14 @@ static int rv8803_init(const struct device *dev)
 
 	k_sleep(K_MSEC(RV8803_STARTUP_TIMING_MS));
 
-#if RV8803_HAS_IRQ || CONFIG_MFD_RV8803_DETECT_BATTERY_STATE
-	struct rv8803_data *data = dev->data;
-	int err;
-#endif
+	/* Reset control register -> disable interrupts */
+	int err =
+		rv8803_bus_reg_update_byte(dev, RV8803_REGISTER_CONTROL,
+					   RV8803_CONTROL_MASK_INTERRUPT, RV8803_DISABLE_INTERRUPT);
+	if (err < 0) {
+		LOG_ERR("Update CONTROL: [%d]", err);
+		return err;
+	}
 
 #if CONFIG_MFD_RV8803_DETECT_BATTERY_STATE
 	err = rv8803_detect_battery_state(dev);
@@ -95,39 +94,35 @@ static int rv8803_init(const struct device *dev)
 #endif /* CONFIG_RV8803_DETECT_BATTERY_STATE */
 
 #if RV8803_HAS_IRQ
-	if (!gpio_is_ready_dt(&config->gpio->irq_gpio)) {
+	struct rv8803_data *data = dev->data;
+
+	if (!gpio_is_ready_dt(&config->irq_gpio)) {
 		LOG_ERR("GPIO not ready!!");
 		return -ENODEV;
 	}
 
 	LOG_INF("IRQ GPIO configure");
-	err = gpio_pin_configure_dt(&config->gpio->irq_gpio, GPIO_INPUT);
+	err = gpio_pin_configure_dt(&config->irq_gpio, GPIO_INPUT);
 	if (err < 0) {
 		LOG_ERR("Failed to configure GPIO!!");
 		return err;
 	}
 
-	err = gpio_pin_interrupt_configure_dt(&config->gpio->irq_gpio, GPIO_INT_EDGE_FALLING);
+	err = gpio_pin_interrupt_configure_dt(&config->irq_gpio, GPIO_INT_EDGE_FALLING);
 	if (err < 0) {
 		LOG_ERR("Failed to configure interrupt!!");
 		return err;
 	}
 
 	gpio_init_callback(&data->irq->gpio_cb, rv8803_gpio_callback_handler,
-			   BIT(config->gpio->irq_gpio.pin));
+			   BIT(config->irq_gpio.pin));
 
-	err = gpio_add_callback_dt(&config->gpio->irq_gpio, &data->irq->gpio_cb);
+	err = gpio_add_callback_dt(&config->irq_gpio, &data->irq->gpio_cb);
 	if (err < 0) {
 		LOG_ERR("Failed to add GPIO callback!!");
 		return err;
 	}
-
-#if defined(RV8803_IRQ_RTC_IN_USE)
-	data->irq->rtc_work.handler = NULL;
-#endif /* RV8803_IRQ_RTC_IN_USE */
-#if defined(RV8803_IRQ_GPIO_USE_COUNTER)
-	data->irq->cnt_work.handler = NULL;
-#endif /* RV8803_IRQ_GPIO_USE_COUNTER */
+	LOG_INF("IRQ GPIO configured");
 #endif /* RV8803_HAS_IRQ */
 
 	LOG_INF("RV8803 INIT");

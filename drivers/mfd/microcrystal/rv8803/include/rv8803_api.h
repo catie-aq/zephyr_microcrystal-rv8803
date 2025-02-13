@@ -29,13 +29,6 @@
 #define RV8803_REGISTER_FLAG      0x0E
 #define RV8803_REGISTER_CONTROL   0x0F
 
-/* Low Voltage Flag */
-#define RV8803_FLAG_MASK_LOW_VOLTAGE_1 (0x01 << 0)
-#define RV8803_FLAG_MASK_LOW_VOLTAGE_2 (0x01 << 1)
-
-/* Timing constraint */
-#define RV8803_STARTUP_TIMING_MS 80
-
 // clang-format off
 #define RV8803_CONTROL_MASK_UPDATE   (0x01 << 5)
 #define RV8803_CONTROL_MASK_COUNTER  (0x01 << 4)
@@ -63,42 +56,12 @@
 #define RV8803_HAS_IRQ 0
 #endif
 
-/* Structs */
-struct rv8803_config_irq {
-#if RV8803_HAS_IRQ
-	const struct gpio_dt_spec irq_gpio;
-#endif
-};
-
-/* RV8803 Base config */
-struct rv8803_config {
-	struct i2c_dt_spec i2c_bus;
-	struct rv8803_config_irq *gpio;
-};
-
 #if CONFIG_MFD_RV8803_DETECT_BATTERY_STATE
 struct rv8803_battery {
 	bool power_on_reset;
 	bool low_battery;
 };
 #endif /* CONFIG_MFD_RV8803_DETECT_BATTERY_STATE */
-
-#if RV8803_HAS_IRQ
-struct rv8803_irq {
-	struct gpio_callback gpio_cb;
-	struct k_work **workers;
-	int workers_index;
-	const int max_workers;
-};
-#endif /* RV8803_HAS_IRQ */
-
-/* RV8803 Base data */
-struct rv8803_data {
-#if CONFIG_MFD_RV8803_DETECT_BATTERY_STATE
-	struct rv8803_battery bat;
-#endif
-	struct rv8803_irq *irq;
-};
 
 #undef DT_DRV_COMPAT
 
