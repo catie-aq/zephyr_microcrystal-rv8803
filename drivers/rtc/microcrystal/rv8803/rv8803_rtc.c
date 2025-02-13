@@ -17,8 +17,8 @@ LOG_MODULE_REGISTER(RV8803_RTC, CONFIG_RTC_LOG_LEVEL);
 static int rv8803_rtc_set_time(const struct device *dev, const struct rtc_time *timeptr)
 {
 	/* Valid date are between 2000 and 2099 */
-	if ((timeptr == NULL) || (timeptr->tm_year < RV8803_CORRECT_YEAR_LEAP_MIN) ||
-	    (timeptr->tm_year > RV8803_CORRECT_YEAR_LEAP_MAX)) {
+	if ((timeptr == NULL) || (timeptr->tm_year < RV8803_RTC_CORRECT_YEAR_LEAP_MIN) ||
+	    (timeptr->tm_year > RV8803_RTC_CORRECT_YEAR_LEAP_MAX)) {
 		LOG_ERR("invalid time");
 		return -EINVAL;
 	}
@@ -178,33 +178,30 @@ static void rv8803_rtc_worker(struct k_work *p_work)
 #if CONFIG_RTC_ALARM
 static bool rv8803_rtc_alarm_time_valid(const struct rtc_time *timeptr, uint16_t mask)
 {
-	if (timeptr->tm_sec != 0) {
-		return false;
-	}
-
 	if ((mask & RTC_ALARM_TIME_MASK_MINUTE) && (timeptr->tm_min < 0 || timeptr->tm_min > 59)) {
+		LOG_ERR("MINUTE: 0 <= [%d] <= 59", timeptr->tm_min);
 		return false;
 	}
 
 	if ((mask & RTC_ALARM_TIME_MASK_HOUR) && (timeptr->tm_hour < 0 || timeptr->tm_hour > 23)) {
-		return false;
-	}
-
-	if (timeptr->tm_mon != 0) {
+		LOG_ERR("HOUR: 0 <= [%d] <= 23", timeptr->tm_hour);
 		return false;
 	}
 
 	if ((mask & RTC_ALARM_TIME_MASK_MONTHDAY) && (mask & RTC_ALARM_TIME_MASK_WEEKDAY)) {
+		LOG_ERR("WEEKDAY & MONTHDAY are incompatible");
 		return false;
 	}
 
 	if ((mask & RTC_ALARM_TIME_MASK_MONTHDAY) &&
 	    (timeptr->tm_mday < 1 || timeptr->tm_mday > 31)) {
+		LOG_ERR("MDAY: 1 <= [%d] <= 31", timeptr->tm_mday);
 		return false;
 	}
 
 	if ((mask & RTC_ALARM_TIME_MASK_WEEKDAY) &&
 	    (timeptr->tm_wday < 0 || timeptr->tm_wday > 6)) {
+		LOG_ERR("WDAY: 0 <= [%d] <= 6", timeptr->tm_wday);
 		return false;
 	}
 
