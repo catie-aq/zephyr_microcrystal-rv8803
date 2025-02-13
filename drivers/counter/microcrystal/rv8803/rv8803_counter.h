@@ -21,11 +21,12 @@
 #define RV8803_FREQUENCY_SHIFT_COUNTER 0
 #define RV8803_FREQUENCY_MASK_COUNTER  (0x03 << RV8803_FREQUENCY_SHIFT_COUNTER)
 
-#if !RV8803_HAS_IRQ
-#warning IRQ not present in parent device
-#endif
+#if RV8803_HAS_IRQ
+#define RV8803_COUNTER_IRQ_HAS_PROP(inst) DT_INST_PROP(inst, use_irq)
+#else
+#define RV8803_COUNTER_IRQ_HAS_PROP(inst) 0
+#endif /* RV8803_HAS_IRQ */
 
-/* Structs */
 #define RV8803_COUNTER_CHANNELS          1
 #define RV8803_COUNTER_MAX_TOP_VALUE     0x0FFFU
 #define RV8803_COUNTER_FREQUENCY_4096_HZ 0x00
@@ -37,14 +38,27 @@ static const uint16_t rv8803_frequency[3] = {4096, 64, 1}; /* Not supported by Z
 
 /* RV8803 CLK config */
 struct rv8803_cnt_config {
-	struct counter_config_info info; /* WARNING counter_config_info have to be first for config
-					    casting in counter api */
-	const struct device *base_dev;   /* Parent device reference */
+	struct counter_config_info info;
+	const struct device *mfd_dev;
 };
 
-/* RV8803 CLK data */
-struct rv8803_cnt_data {
+#if RV8803_HAS_IRQ
+// clang-format off
+struct rv8803_cnt_irq {
+	const struct device *dev;
+	struct k_work work;
+	int (*append_listener_fn)(const struct device *dev, struct k_work *worker);
+};
+// clang-format on
+
+struct rv8803_cnt_counter {
 	counter_top_callback_t counter_cb;
-	void *user_data;
+	void *counter_cb_data;
+};
+#endif
+
+struct rv8803_cnt_data {
+	struct rv8803_cnt_irq *cnt_irq;
+	struct rv8803_cnt_counter *cnt_counter;
 };
 #endif /* ZEPHYR_DRIVERS_RTC_MICROCYSTAL_RV8803_COUNTER_H_ */
