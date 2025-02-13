@@ -20,4 +20,26 @@ config MFD_RV8803_DETECT_BATTERY_STATE
     help
       Enable flags on battery state of charge
 
+config MFD_RV8803_WORKQUEUE
+    bool "Custom RV-8803 work queue"
+    default y
+    help
+      Enable RV-8803 work queue handling interrupts for all instances
+
+if MFD_RV8803_WORKQUEUE
+
+config MFD_RV8803_WORKQUEUE_PRIORITY
+    int "Stack size for the RV-8803 interrupt work queue"
+    default MAIN_THREAD_PRIORITY
+    help
+      Priority level for the work queue handling interrupts and dispatching callbacks
+
+config MFD_RV8803_WORKQUEUE_SIZE
+    int "Priority for the RV-8803 interrupt work queue"
+    default 512
+    help
+      Size of the stack used for the work queue handling interrupts and dispatching callbacks
+
+endif
+
 endif

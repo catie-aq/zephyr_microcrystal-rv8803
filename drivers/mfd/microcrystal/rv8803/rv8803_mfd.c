@@ -11,6 +11,23 @@
 
 LOG_MODULE_REGISTER(RV8803, CONFIG_MFD_LOG_LEVEL);
 
+#if CONFIG_MFD_RV8803_WORKQUEUE
+K_THREAD_STACK_DEFINE(rv8803_work_queue_stack, CONFIG_MFD_RV8803_WORKQUEUE_SIZE);
+static struct k_work_q rv8803_work_queue;
+
+static int rv8803_workqueue_init(void)
+{
+	k_work_queue_init(&rv8803_work_queue);
+	k_work_queue_start(&rv8803_work_queue, rv8803_work_queue_stack,
+			   K_THREAD_STACK_SIZEOF(rv8803_work_queue_stack),
+			   CONFIG_MFD_RV8803_WORKQUEUE_PRIORITY, NULL);
+
+	return 0;
+}
+
+SYS_INIT(rv8803_workqueue_init, POST_KERNEL, CONFIG_I2C_INIT_PRIORITY);
+#endif
+
 int rv8803_bus_reg_read_byte(const struct device *dev, uint8_t reg_addr, uint8_t *value)
 {
 	const struct rv8803_config *config = dev->config;
@@ -109,7 +126,11 @@ static void rv8803_gpio_callback_handler(const struct device *p_port, struct gpi
 
 	for (int i = 0; i < data->workers_index; i++) {
 		if (data->workers[i] != NULL) {
+#if CONFIG_MFD_RV8803_WORKQUEUE
+			k_work_submit_to_queue(&rv8803_work_queue, data->workers[i]);
+#else
 			k_work_submit(data->workers[i]);
+#endif
 		}
 	}
 }
