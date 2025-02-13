@@ -33,6 +33,7 @@
 		rv88030_counter: rv8803-counter {
 			compatible = "microcrystal,rv8803-counter";
 			frequency = <1>;
+			use-irq;
 		};
 
 		rv88030_clock: rv8803-clock {
