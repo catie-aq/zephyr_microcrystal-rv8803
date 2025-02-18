@@ -5,7 +5,8 @@
 
 #include <zephyr/logging/log.h>
 
-#include "rv8803_api.h"
+#include "rv8803.h"
+#include "rv8803_common.h"
 #define DT_DRV_COMPAT microcrystal_rv8803
 #include "rv8803_mfd.h"
 

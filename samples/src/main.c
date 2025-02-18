@@ -13,7 +13,7 @@
 #include <string.h>
 
 #if CONFIG_MFD_RV8803_DETECT_BATTERY_STATE
-#include "rv8803_api.h"
+#include "rv8803.h"
 #endif /* CONFIG_RV8803_DETECT_BATTERY_STATE */
 
 #define RTC_TEST_GET_SET_TIME         (1767225595UL) // Wed Dec 31 2025 23:59:55 GMT+0000

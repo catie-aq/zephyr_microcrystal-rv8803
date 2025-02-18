@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef ZEPHYR_DRIVERS_RTC_MICROCYSTAL_RV8803_API_H_
-#define ZEPHYR_DRIVERS_RTC_MICROCYSTAL_RV8803_API_H_
+#ifndef ZEPHYR_DRIVERS_RTC_MICROCYSTAL_RV8803_COMMON_H_
+#define ZEPHYR_DRIVERS_RTC_MICROCYSTAL_RV8803_COMMON_H_
 
 #include <zephyr/kernel.h>
 
@@ -237,21 +237,6 @@ bool rv8803_irq_gpio_is_available(const struct device *dev);
  */
 int rv8803_append_irq_listener(const struct device *dev, struct k_work *worker);
 
-#if CONFIG_MFD_RV8803_DETECT_BATTERY_STATE
-/**
- * @brief RV8803 battery information structure.
- *
- * @details This structure contains the following:
- *
- * - @a power_on_reset: Power-on reset flag.
- * - @a low_battery: Low battery flag.
- */
-struct rv8803_battery {
-	bool power_on_reset;
-	bool low_battery;
-};
-#endif /* CONFIG_MFD_RV8803_DETECT_BATTERY_STATE */
-
 #undef DT_DRV_COMPAT
 
-#endif /* ZEPHYR_DRIVERS_RTC_MICROCYSTAL_RV8803_API_H_ */
+#endif /* ZEPHYR_DRIVERS_RTC_MICROCYSTAL_RV8803_COMMON_H_ */
