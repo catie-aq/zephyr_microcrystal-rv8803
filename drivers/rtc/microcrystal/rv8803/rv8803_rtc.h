@@ -122,6 +122,10 @@
 #define RV8803_RTC_IRQ_ALARM(inst)          0
 #define RV8803_RTC_IRQ_ALARM_HAS_PROP(inst) 0
 #endif /* RV8803_HAS_IRQ */
+#else
+#define RV8803_RTC_IRQ_ALARM_AVAILABLE      0
+#define RV8803_RTC_IRQ_ALARM(inst)          0
+#define RV8803_RTC_IRQ_ALARM_HAS_PROP(inst) 0
 #endif /* CONFIG_RTC_ALARM */
 
 /**
@@ -151,6 +155,10 @@
 #define RV8803_RTC_IRQ_UPDATE(inst)          0
 #define RV8803_RTC_IRQ_UPDATE_HAS_PROP(inst) 0
 #endif /* RV8803_HAS_IRQ */
+#else
+#define RV8803_RTC_IRQ_UPDATE_AVAILABLE      0
+#define RV8803_RTC_IRQ_UPDATE(inst)          0
+#define RV8803_RTC_IRQ_UPDATE_HAS_PROP(inst) 0
 #endif /* CONFIG_RTC_UPDATE */
 
 /**
