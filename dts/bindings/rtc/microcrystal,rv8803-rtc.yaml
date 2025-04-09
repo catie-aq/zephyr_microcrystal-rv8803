@@ -7,3 +7,24 @@ compatible: "microcrystal,rv8803-rtc"
 
 include:
   - name: rtc-device.yaml
+
+on-bus: rv8803
+
+properties:
+  use-irq:
+    type: boolean
+    description: Configures RV-8803 RTC to use interruption.
+  alarm:
+    type: string
+    enum:
+      - "poll"
+      - "irq"
+    required: true
+    description: Configures alarm of RV-8803 RTC to use interruption.
+  update:
+    type: string
+    enum:
+      - "poll"
+      - "irq"
+    required: true
+    description: Configures update of RV-8803 RTC to use interruption.

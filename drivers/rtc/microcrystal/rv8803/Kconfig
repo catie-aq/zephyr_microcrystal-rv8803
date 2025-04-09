@@ -3,43 +3,10 @@
 # Copyright (c) 2024 CATIE
 # SPDX-License-Identifier: Apache-2.0
 
-menuconfig RV8803
-    bool "RTC RV-8803 peripheral"
+menuconfig RTC_RV8803
+    bool "RV-8803 peripheral RTC"
     default y
-    depends on DT_HAS_MICROCRYSTAL_RV8803_ENABLED
-    select I2C
-    help
-      Enable driver for MICRO CRYSTAL RV-8803 smt real-time clock module on i2c-bus
-
-if RV8803
-  config RV8803_DETECT_BATTERY_STATE
-    bool "Enable RTC battery flags"
-    default y
-    depends on RV8803
-    help
-      Enable flags on battery state of charge
-
-  config RV8803_RTC_ENABLE
-    bool "Enable RTC Interface"
-    default y
-    depends on RV8803
     depends on DT_HAS_MICROCRYSTAL_RV8803_RTC_ENABLED
+    select MFD
     help
-      Enable real-time clock interface.
-
-  config RV8803_COUNTER_ENABLE
-    bool "Enable COUNTER Interface"
-    default y
-    depends on RV8803
-    depends on DT_HAS_MICROCRYSTAL_RV8803_CNT_ENABLED
-    help
-      Enable counter interface.
-
-  config RV8803_CLK_ENABLE
-    bool "Enable Clock Control Interface"
-    default y
-    depends on RV8803
-    depends on DT_HAS_MICROCRYSTAL_RV8803_CLK_ENABLED
-    help
-      Enable Clock Control Interface.
-endif # RV8803
+      Enable driver for MICRO CRYSTAL RV-8803 smt RTC module on i2c-bus

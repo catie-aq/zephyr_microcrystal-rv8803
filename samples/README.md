@@ -4,29 +4,30 @@ This sample application provides an example usage of the RTC RV8803 from Microcr
 
 - It print the battery flags to check for RTC battery status.
 - It sets the RTC time to the `Wed Dec 31 2025 23:59:55 GMT+0000`
-- It sets an alarm to send an interrupt each time the RTC time reaches the minute `01` (i.e. each hour at minute `01`).
+- It sets an RTC alarm to set up an interrupt flag each time the RTC time reaches the minute `01` (i.e. each hour at minute `01`).
 - Use the alarm callback to change the `clock_OUT` rate between `32.768 kHz` and `1024 Hz`.
-- Use the update callback to print a message each second.
-- Use the COUNTER callback to printa message every 2 second.
+- Use the RTC update callback to print a message each second.
+- Use the COUNTER in interrupt mode to print a message every 2 second.
 - It gets the RTC time and prints it each second.
+- It polls alarm flags to fire the alarm callback.
 
 > [!NOTE]
-> Alarms can not trigger more often than every minute.
-> Counter support `1/60 Hz` but Zephyr doesn't support it.
+> Alarms can not trigger more often than every minute.\
+> Counter support `1/60 Hz` but Zephyr doesn't support it.\
+> Update generates hardware interrupt signal in `polling` as well as in `interrupt` mode.
 
 # Requirements
 
 - Power Supply: RTC components usually require an additional battery cell.
 - Board allowing I2C communication.
 - Available IRQ GPIO for Alarm and Update interrupts.
+- `CONFIG_MFD=y` in prj.conf to enable MFD base device.
+- `CONFIG_MFD_RV8803_DETECT_BATTERY_STATE = y` in prj.conf to enable battery monitoring.
 - `CONFIG_RTC=y` in prj.conf to use RTC API.
-- Set `CONFIG_RV8803_RTC_ENABLE=n` in prj.conf to disable RTC regardless of `CONFIG_RTC`.
-- `CONFIG_COUNTER=y` in prj.conf to use COUNTER API.
-- Set `CONFIG_RV8803_COUNTER_ENABLE=n` in prj.conf to disable COUNTER regardless of `CONFIG_RTC`.
 - `CONFIG_RTC_ALARM=y` in prj.conf to use RTC arlams.
 - `CONFIG_RTC_UPDATE=y` in prj.conf to use RTC update.
+- `CONFIG_COUNTER=y` in prj.conf to use COUNTER API.
 - `CONFIG_CLOCK_CONTROL=y` in prj.conf to use CLK API.
-- Set `CONFIG_RV8803_CLK_ENABLE=n` in prj.conf to disable CLK regardless of `CONFIG_CLOCK_CONTROL`.
 
 # References
 
@@ -50,25 +51,25 @@ RV8803: POR[0] LOW[0]
 RTC device is ready
 CLK device is ready
 Clock rate[0]
-RTC set time succeed
-RTC get time succeed
+RTC set time SUCCEED
+RTC get time SUCCEED
 Setter[2] datetime [0|0 0:1]
 Getter[2] datetime [0|0 0:1]
+Counter: ferq[1]
+Counter: Max_value[4095]
+Counter: 2s ticks[2]
 RTC_TIME[0] [Wed Dec 31 23:59:56 2025]
-RTC Update detected!!
 RTC_TIME[0] [Wed Dec 31 23:59:57 2025]
-RTC Update detected!!
-CNT Period detected!!
 RTC_TIME[0] [Wed Dec 31 23:59:58 2025]
+CNT Period detected!!
 RTC Update detected!!
 RTC_TIME[0] [Wed Dec 31 23:59:59 2025]
 RTC Update detected!!
 CNT Period detected!!
 RTC_TIME[0] [Thu Jan  1 00:00:00 2026]
-RTC Update detected!!
 RTC_TIME[0] [Thu Jan  1 00:00:01 2026]
-RTC Update detected!!
 RTC_TIME[0] [Thu Jan  1 00:00:02 2026]
+CNT Period detected!!
 RTC Update detected!!
 RTC_TIME[0] [Thu Jan  1 00:00:03 2026]
 RTC Update detected!!
@@ -76,41 +77,42 @@ CNT Period detected!!
 
 ...
 
+RTC_TIME[0] [Thu Jan  1 00:00:56 2026]
+RTC_TIME[0] [Thu Jan  1 00:00:57 2026]
 RTC_TIME[0] [Thu Jan  1 00:00:58 2026]
+CNT Period detected!!
 RTC Update detected!!
 RTC_TIME[0] [Thu Jan  1 00:00:59 2026]
 RTC Update detected!!
 CNT Period detected!!
-RTC_TIME[0] [Thu Jan  1 00:01:00 2026]
-RTC Update detected!!
+RTC_TIME[1] [Thu Jan  1 00:01:00 2026]
 RTC Alarm detected: set rate[1024 Hz]!!
 RTC_TIME[0] [Thu Jan  1 00:01:01 2026]
-RTC Update detected!!
-CNT Period detected!!
 RTC_TIME[0] [Thu Jan  1 00:01:02 2026]
+CNT Period detected!!
 RTC Update detected!!
 RTC_TIME[0] [Thu Jan  1 00:01:03 2026]
-RTC Update detected!!
-CNT Period detected!!
 
 ...
 
+RTC_TIME[0] [Thu Jan  1 01:00:56 2026]
+RTC_TIME[0] [Thu Jan  1 01:00:57 2026]
 RTC_TIME[0] [Thu Jan  1 01:00:58 2026]
+CNT Period detected!!
 RTC Update detected!!
 RTC_TIME[0] [Thu Jan  1 01:00:59 2026]
 RTC Update detected!!
 CNT Period detected!!
-RTC_TIME[0] [Thu Jan  1 01:01:00 2026]
-RTC Update detected!!
+RTC_TIME[1] [Thu Jan  1 01:01:00 2026]
 RTC Alarm detected: set rate[32768 Hz]!!
 RTC_TIME[0] [Thu Jan  1 01:01:01 2026]
-RTC Update detected!!
-CNT Period detected!!
 RTC_TIME[0] [Thu Jan  1 01:01:02 2026]
+CNT Period detected!!
 RTC Update detected!!
 RTC_TIME[0] [Thu Jan  1 01:01:03 2026]
-RTC Update detected!!
-CNT Period detected!!
 
 <repeats endlessly>
 ```
+
+> [!NOTE]
+> `main.c` adapts to the prf.conf entries and depends on app.overlay devicetree to generate corresponding code.
