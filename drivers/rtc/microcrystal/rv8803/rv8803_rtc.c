@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#define DT_DRV_COMPAT microcrystal_rv8803_rtc
+#define DT_DRV_COMPAT microcrystal_rv8803_rtc_catie
 
 #include <zephyr/drivers/rtc.h>
 #include <zephyr/sys/util.h>

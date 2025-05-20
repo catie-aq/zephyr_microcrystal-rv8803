@@ -3,7 +3,7 @@
 
 description: Micro Crystal AG RV-8803 CLK.
 
-compatible: "microcrystal,rv8803-clk"
+compatible: "microcrystal,rv8803-clk-catie"
 
 include:
   - name: clock-controller.yaml
