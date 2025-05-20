@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#define DT_DRV_COMPAT microcrystal_rv8803
+#define DT_DRV_COMPAT microcrystal_rv8803_catie
 
 #include <zephyr/logging/log.h>
 

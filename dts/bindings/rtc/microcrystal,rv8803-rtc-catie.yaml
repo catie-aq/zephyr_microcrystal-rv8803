@@ -3,7 +3,7 @@
 
 description: Micro Crystal AG RV-8803 RTC.
 
-compatible: "microcrystal,rv8803-rtc"
+compatible: "microcrystal,rv8803-rtc-catie"
 
 include:
   - name: rtc-device.yaml

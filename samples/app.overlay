@@ -19,21 +19,21 @@
 	status = "okay";
 
 	rv88030: rv8803@32 {
-		compatible = "microcrystal,rv8803";
+		compatible = "microcrystal,rv8803-catie";
 		reg = <0x32>;
 		irq-gpios = <&sixtron_connector DIO2 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
 
 		rv88030_rtc: rv8803-rtc {
-			compatible = "microcrystal,rv8803-rtc";
+			compatible = "microcrystal,rv8803-rtc-catie";
 		};
 
 		rv88030_cnt: rv8803-cnt {
-			compatible = "microcrystal,rv8803-cnt";
+			compatible = "microcrystal,rv8803-cnt-catie";
 			frequency = "1";
 		};
 
 		rv88030_clk: rv8803-clk {
-			compatible = "microcrystal,rv8803-clk";
+			compatible = "microcrystal,rv8803-clk-catie";
 			#clock-cells = <0>;
 		};
 	};
