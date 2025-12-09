@@ -86,7 +86,7 @@ static int rv8803_init(const struct device *dev)
 #endif /* RV8803_IRQ_GPIO_USE_COUNTER */
 #endif /* RV8803_HAS_IRQ */
 
-#if CONFIG_RV8803_BATTERY_ENABLE
+#if CONFIG_RV8803_DETECT_BATTERY_STATE
 	uint8_t value;
 	err = i2c_reg_read_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG, &value);
 	if (err < 0) {
@@ -99,6 +99,10 @@ static int rv8803_init(const struct device *dev)
 	data->bat->low_battery = value & RV8803_FLAG_MASK_LOW_VOLTAGE_1;
 
 	if (data->bat->power_on_reset) {
+		LOG_WRN("POR was true on last reset! Battery may need replacement!");
+		if (data->bat->low_battery) {
+			LOG_WRN("LOW is also true, it will be cleared as well.");
+		}
 		value &= ~RV8803_FLAG_MASK_LOW_VOLTAGE_2;
 		err = i2c_reg_write_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG, value);
 		if (err < 0) {
@@ -106,6 +110,7 @@ static int rv8803_init(const struct device *dev)
 			return err;
 		}
 	} else if (data->bat->low_battery) {
+		LOG_WRN("LOW was true on last reset! Battery may need replacement!");
 		value &= ~RV8803_FLAG_MASK_LOW_VOLTAGE_1;
 		err = i2c_reg_write_byte_dt(&config->i2c_bus, RV8803_REGISTER_FLAG, value);
 		if (err < 0) {
@@ -128,11 +133,11 @@ static int rv8803_init(const struct device *dev)
 		.i2c_bus = I2C_DT_SPEC_INST_GET(n),                                                \
 		.gpio = &rv8803_config_irq_##n,                                                    \
 	};                                                                                         \
-	IF_ENABLED(CONFIG_RV8803_BATTERY_ENABLE,                                                   \
+	IF_ENABLED(CONFIG_RV8803_DETECT_BATTERY_STATE,                                                   \
 		   (static struct rv8803_battery rv8803_battery_##n;))                             \
 	IF_ENABLED(RV8803_HAS_IRQ, (static struct rv8803_irq rv8803_irq_##n;))                     \
 	static struct rv8803_data rv8803_data_##n = {                                              \
-		IF_ENABLED(CONFIG_RV8803_BATTERY_ENABLE, (.bat = &rv8803_battery_##n, ))           \
+		IF_ENABLED(CONFIG_RV8803_DETECT_BATTERY_STATE, (.bat = &rv8803_battery_##n, ))           \
 			IF_ENABLED(RV8803_HAS_IRQ, (.irq = &rv8803_irq_##n, ))};                   \
 	DEVICE_DT_INST_DEFINE(n, rv8803_init, NULL, &rv8803_data_##n, &rv8803_config_##n,          \
 			      POST_KERNEL, CONFIG_RTC_INIT_PRIORITY, NULL);
