@@ -133,11 +133,11 @@ static int rv8803_init(const struct device *dev)
 		.i2c_bus = I2C_DT_SPEC_INST_GET(n),                                                \
 		.gpio = &rv8803_config_irq_##n,                                                    \
 	};                                                                                         \
-	IF_ENABLED(CONFIG_RV8803_DETECT_BATTERY_STATE,                                                   \
+	IF_ENABLED(CONFIG_RV8803_DETECT_BATTERY_STATE,                                             \
 		   (static struct rv8803_battery rv8803_battery_##n;))                             \
 	IF_ENABLED(RV8803_HAS_IRQ, (static struct rv8803_irq rv8803_irq_##n;))                     \
 	static struct rv8803_data rv8803_data_##n = {                                              \
-		IF_ENABLED(CONFIG_RV8803_DETECT_BATTERY_STATE, (.bat = &rv8803_battery_##n, ))           \
+		IF_ENABLED(CONFIG_RV8803_DETECT_BATTERY_STATE, (.bat = &rv8803_battery_##n, ))     \
 			IF_ENABLED(RV8803_HAS_IRQ, (.irq = &rv8803_irq_##n, ))};                   \
 	DEVICE_DT_INST_DEFINE(n, rv8803_init, NULL, &rv8803_data_##n, &rv8803_config_##n,          \
 			      POST_KERNEL, CONFIG_RTC_INIT_PRIORITY, NULL);
