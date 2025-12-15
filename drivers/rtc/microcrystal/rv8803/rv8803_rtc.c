@@ -49,14 +49,12 @@ static int rv8803_rtc_set_time(const struct device *dev, const struct rtc_time *
 	err = i2c_burst_read_dt(&config->i2c_bus, RV8803_REGISTER_CONTROL, control_reg,
 				sizeof(control_reg));
 	if (err < 0) {
-		LOG_ERR("error while reading i2c data");
 		return err;
 	}
 	control_reg[0] |= RV8803_RESET_BIT;
 	err = i2c_burst_write_dt(&config->i2c_bus, RV8803_REGISTER_CONTROL, control_reg,
 				 sizeof(control_reg));
 	if (err < 0) {
-		LOG_ERR("error while writing i2c data");
 		return err;
 	}
 
