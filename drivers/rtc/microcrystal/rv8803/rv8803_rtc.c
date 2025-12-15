@@ -49,12 +49,14 @@ static int rv8803_rtc_set_time(const struct device *dev, const struct rtc_time *
 	err = i2c_burst_read_dt(&config->i2c_bus, RV8803_REGISTER_CONTROL, control_reg,
 				sizeof(control_reg));
 	if (err < 0) {
+		LOG_ERR("error while reading i2c data");
 		return err;
 	}
 	control_reg[0] |= RV8803_RESET_BIT;
 	err = i2c_burst_write_dt(&config->i2c_bus, RV8803_REGISTER_CONTROL, control_reg,
 				 sizeof(control_reg));
 	if (err < 0) {
+		LOG_ERR("error while writing i2c data");
 		return err;
 	}
 
@@ -500,19 +502,19 @@ static int rv8803_rtc_init(const struct device *dev)
 	data->irq->rtc_work.handler = rv8803_rtc_worker;
 
 #if RV8803_IRQ_GPIO_USE_ALARM
-	LOG_INF("RV8803 RTC ALARM INIT");
+	LOG_DBG("RV8803 RTC ALARM INIT");
 	rtc_data->rtc_alarm->alarm_cb = NULL;
 	rtc_data->rtc_alarm->alarm_cb_data = NULL;
 #endif /* RV8803_IRQ_GPIO_USE_ALARM */
 #if RV8803_IRQ_GPIO_USE_UPDATE
-	LOG_INF("RV8803 RTC UPDATE INIT");
+	LOG_DBG("RV8803 RTC UPDATE INIT");
 	rtc_data->rtc_update->update_cb = NULL;
 	rtc_data->rtc_update->update_cb_data = NULL;
 #endif /* RV8803_IRQ_GPIO_USE_UPDATE */
 
 #endif /* RV8803_IRQ_GPIO_IN_USE */
 
-	LOG_INF("RV8803 RTC INIT");
+	LOG_DBG("RV8803 RTC INIT");
 
 	return 0;
 }

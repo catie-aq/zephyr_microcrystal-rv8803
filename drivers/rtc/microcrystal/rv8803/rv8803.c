@@ -56,7 +56,7 @@ static int rv8803_init(const struct device *dev)
 		return -ENODEV;
 	}
 
-	LOG_INF("IRQ GPIO configure");
+	LOG_DBG("IRQ GPIO configure");
 	err = gpio_pin_configure_dt(&config->gpio->irq_gpio, GPIO_INPUT);
 	if (err < 0) {
 		LOG_ERR("Failed to configure GPIO!!");
@@ -120,7 +120,7 @@ static int rv8803_init(const struct device *dev)
 	}
 #endif /* CONFIG_RV8803_DETECT_BATTERY_STATE */
 
-	LOG_INF("RV8803 INIT");
+	LOG_DBG("RV8803 INIT");
 
 	return 0;
 }
