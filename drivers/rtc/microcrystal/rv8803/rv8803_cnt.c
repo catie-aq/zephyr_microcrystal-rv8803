@@ -195,8 +195,8 @@ static int rv8803_cnt_init(const struct device *dev)
 	if (!device_is_ready(cnt_config->base_dev)) {
 		return -ENODEV;
 	}
-	LOG_DBG("RV8803 CNT: FREQ[%d]", cnt_config->info.freq);
-	LOG_DBG("RV8803 CNT INIT");
+	LOG_INF("RV8803 CNT: FREQ[%d]", cnt_config->info.freq);
+	LOG_INF("RV8803 CNT INIT");
 
 #if RV8803_HAS_IRQ
 	struct rv8803_data *data = cnt_config->base_dev->data;
