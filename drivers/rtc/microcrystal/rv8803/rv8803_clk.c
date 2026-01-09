@@ -102,7 +102,7 @@ static int rv8803_clk_init(const struct device *dev)
 	if (!device_is_ready(config->base_dev)) {
 		return -ENODEV;
 	}
-	LOG_DBG("RV8803 CLK INIT");
+	LOG_INF("RV8803 CLK INIT");
 
 	return 0;
 }
