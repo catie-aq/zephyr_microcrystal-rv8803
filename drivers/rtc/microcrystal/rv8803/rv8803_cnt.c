@@ -212,7 +212,7 @@ static int rv8803_cnt_init(const struct device *dev)
 }
 
 /* RV8803 CNT driver API */
-static const struct counter_driver_api rv8803_cnt_driver_api = {
+static DEVICE_API(counter, rv8803_cnt_driver_api) = {
 	.start = rv8803_cnt_start,
 	.stop = rv8803_cnt_stop,
 	.set_top_value = rv8803_cnt_set_top_value,

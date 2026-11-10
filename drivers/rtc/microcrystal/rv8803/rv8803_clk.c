@@ -108,7 +108,7 @@ static int rv8803_clk_init(const struct device *dev)
 }
 
 /* RV8803 RTC driver API */
-static const struct clock_control_driver_api rv8803_clk_driver_api = {
+static DEVICE_API(clock_control, rv8803_clk_driver_api) = {
 	.on = rv8803_clk_on,
 	.off = rv8803_clk_off,
 	.set_rate = rv8803_clk_set_rate,
